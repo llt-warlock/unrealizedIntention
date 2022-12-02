@@ -11,10 +11,11 @@ import pandas as pd
 from sklearn.model_selection import KFold, GroupKFold
 from IPython.display import clear_output
 import pytorch_lightning as pl
+
 logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
 # set the cudnn
-torch.backends.cudnn.benchmark=False
-torch.backends.cudnn.deterministic=True
+torch.backends.cudnn.benchmark = False
+torch.backends.cudnn.deterministic = True
 
 from data_loading.dataset import FatherDataset, FatherDatasetSubset
 from data_loading.extractors import AccelExtractor
@@ -25,9 +26,15 @@ from constants import (
     examples_path, dataset_path)
 from train import System, train, test
 
+import multiprocessing
+from multiprocessing import Process
+import threading
+
 '''
 do_train : 
 '''
+
+
 def do_cross_validation(do_train, ds, input_modalities, seed, prefix=None, deterministic=False):
     # cv_splits : [array, array, array, ...]
     # split data into 3 sets
@@ -72,7 +79,7 @@ def do_cross_validation(do_train, ds, input_modalities, seed, prefix=None, deter
 
 
 def do_run(examples, input_modalities,
-    do_train=True, deterministic=True, prefix=''):
+           do_train=True, deterministic=True, prefix=''):
     ''' train = True will train the models, and requires
             model_label_modality = test_label_modality
         train = False will load weights to test the models and does not require
@@ -84,7 +91,7 @@ def do_run(examples, input_modalities,
     extractors = {}
 
     if 'accel' in input_modalities:
-        #accel_ds_path = os.path.join(processed_accel_path, 'subj_accel_interp.pkl')
+        # accel_ds_path = os.path.join(processed_accel_path, 'subj_accel_interp.pkl')
         # get accel data
         accel_ds_path = '../data/subj_accel_interp.pkl'
         extractors['accel'] = AccelExtractor(accel_ds_path)
@@ -110,20 +117,20 @@ def do_run(examples, input_modalities,
         'seed': seed
     }
 
+
 def get_table(do_train=True, deterministic=True):
-    #examples = pickle.load(open(examples_path, 'rb'))
+    # examples = pickle.load(open(examples_path, 'rb'))
     # data set
     examples = pickle.load(open("../data/examples.pkl", 'rb'))
 
     all_input_modalities = [
-        #('video',),
+        # ('video',),
         # ('pose',),
         ('accel',),
     ]
 
     res = {}
     for input_modalities in all_input_modalities:
-
         run_results = do_run(
             examples,
             input_modalities,
@@ -133,7 +140,10 @@ def get_table(do_train=True, deterministic=True):
         res['-'.join(input_modalities)] = run_results
     return res
 
-try:
-    res = get_table(do_train=True, deterministic=False)
-except Exception:
-    print(traceback.format_exc())
+
+if __name__ == '__main__':
+
+    try:
+        res = get_table(do_train=True, deterministic=False)
+    except Exception:
+        print(traceback.format_exc())
