@@ -11,10 +11,7 @@ from joblib import Parallel, delayed
 from scipy.interpolate import interp1d
 from pytorchvideo.data.video import VideoPathHandler
 
-from .utils import (
-    get_video_hash,
-    video_seconds_to_accel_sample
-)
+
 
 
 class AccelExtractor():
@@ -32,8 +29,11 @@ class AccelExtractor():
         if pid not in self.accel:
             return np.zeros((self.num_channels, round(self.fs * (end-start))), dtype=np.float32)
 
-        accel_ini = video_seconds_to_accel_sample(start)
-        accel_fin = video_seconds_to_accel_sample(end)
+        # accel_ini = video_seconds_to_accel_sample(start)
+        # accel_fin = video_seconds_to_accel_sample(end)
+
+        accel_ini = start
+        accel_fin = end
 
         my_subj_accel = self.accel[pid]
         ini_idx = np.argmax(my_subj_accel[:,0] > accel_ini)
