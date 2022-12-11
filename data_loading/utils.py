@@ -54,7 +54,7 @@ class Maker():
             fpath = os.path.join(vad_path, f'{i}.vad')
             if os.path.exists(fpath) and os.path.isfile(fpath):
                 self.vad[i] = pd.read_csv(fpath, header=None).to_numpy()
-                print("i : ", self.vad[i], "  length : ", len(self.vad[i]))
+                print(i, " : ", "  length : ", len(self.vad[i]))
 
         if len(self.vad) == 0:
             print('load_vad called but nothing loaded.')
@@ -82,41 +82,39 @@ class Maker():
         examples = list()
         example_id = 0
 
-        #for _, key, value in enumerate(self.vad):
-
-        for key, value in self.vad.items():
-            # 打开对应的pid csv 和提取对应的list tuple
+        valid_list = [2, 3, 4, 5, 7, 10, 11, 12, 14, 15, 17, 18, 19, 22, 23, 24, 26, 27, 30, 31, 32, 33, 34, 35]
+        for i in valid_list:
             time_window_list = []
-            with open(csv_path + str(key) + ".csv") as infile:
+            # read corresponding csv
+            with open(csv_path + str(i) + ".csv") as infile:
                 reader = csv.reader(infile)
 
                 for line in reader:
                     if line:
-                        print("line : ", line)
+                        #print("line : ", line)
                         time_window_list.append(tuple([int(line[0]), int(line[1])]))
 
-            for i in range(0, len(time_window_list)):
-                ini_time = time_window_list[i][0]
-                end_time = time_window_list[i][1]
+            # add into example
+            for j in range(0, len(time_window_list)):
+                ini_time = time_window_list[j][0]
+                end_time = time_window_list[j][1]
 
-                # pid, 开始时间，结束时间
-                temp_vad = self._get_vad(key, ini_time, end_time)
-
-                # interp_vad 是干嘛的
-                # interp_vad = self._interp_vad(temp_vad, 100, 20)
+                temp_vad = self._get_vad(i, ini_time, end_time)
 
                 examples.append({
                     'id': example_id,
-                    'pid': key,
-                    'int_time': ini_time,
+                    'pid': i,
+                    'ini_time': ini_time,
                     'end_time': end_time,
                     # data
-                    'vad': temp_vad,
-
+                    'vad': temp_vad
                 })
                 example_id += 1
 
         self.examples = examples
+
+        print("length of examples is !  : ", len(examples), " type of example : ", type(examples[0]))
+
         return examples
 
     def filter_examples_by_movement_threshold(self, ts=20):
@@ -131,5 +129,3 @@ class Maker():
                 continue
 
             new_examples.append(ex)
-
-
