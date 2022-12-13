@@ -67,6 +67,7 @@ from scipy.io.wavfile import write as wavwrite
 
 
 
+
 def make_vad(df: pd.DataFrame, pid, size=9900, fs=100):
     ''' len is in seconds
     '''
@@ -130,7 +131,6 @@ from pathlib import Path
 
 if __name__ == '__main__':
     for f in Path(diarizations_path).glob('*.rttm'):
-        print("不是把")
         df = load_diarization(f)
         pid = int(f.stem)
         # load corresponding vad file based on rttm files
@@ -138,9 +138,7 @@ if __name__ == '__main__':
         print("out_path : ", out_path)
         '''
         df : diarization file
-        pid : 编号
         out_path : output path
-        生成一个人的vad
         '''
 
         store_vad(df, pid, out_path)
