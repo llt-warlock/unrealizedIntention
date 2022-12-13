@@ -1,5 +1,6 @@
 import csv
 import os
+from random import random
 
 import numpy as np
 import pandas as pd
@@ -7,7 +8,7 @@ from scipy.io.wavfile import write as wavwrite, read as wavread
 from constants import (processed_audio_path)
 
 diarizations_path = './rttmFile'
-vad_path =  './vad'
+vad_path = './vad'
 
 
 def load_diarization(fpath):
@@ -64,6 +65,8 @@ import numpy as np
 from scipy.io.wavfile import write as wavwrite
 
 
+
+
 def make_vad(df: pd.DataFrame, pid, size=9900, fs=100):
     ''' len is in seconds
     '''
@@ -77,26 +80,23 @@ def make_vad(df: pd.DataFrame, pid, size=9900, fs=100):
     for idx, row in df.iterrows():
         spk = int(row['speaker'].split('_')[1])
         if pid in main_speakers and spk not in main_speakers[pid]:
-            print("不会吧")
             continue
 
+        print("ini is :  ", row['ini'])
         ini = round(row['ini'] * fs)
         end = round((row['ini'] + row['dur']) * fs)
 
-        # 1 秒 用多少表示?
-        time_ini = round((row['ini'] - 60) * fs)
+        # 2 seconds
+        time_ini = round((row['ini'] - 2) * fs)
         time_end = round(row['ini'] * fs)
         time_window.append(tuple([time_ini, time_end]))
-        print("我在这里")
         vad[ini:end] = 1
 
     return vad, time_window
 
 
 def store_vad(df: pd.DataFrame, pid, fname, size=9900, fs=100):
-    print("进来没")
     vad, time_list = make_vad(df, pid, size=size, fs=fs)
-
 
     # write csv
     with open(fname + '.csv', "w") as f_f:
@@ -105,14 +105,28 @@ def store_vad(df: pd.DataFrame, pid, fname, size=9900, fs=100):
             csv_writer.writerow(mytuple)
 
     # write .vad file
-    print("我也在这里")
     np.savetxt(fname + '.vad', vad, fmt='%d')
     # write .wav file
     wavwrite(fname + '.wav', fs, vad)
 
 
-from pathlib import Path
+def load_vad(vad_path_0, pid_list):
+    vad = {}
+    for i in range(0, len(pid_list)):
+        fpath = os.path.join(vad_path_0, f'{pid_list[i]}.vad')
+        print("fpath : ", fpath)
+        if os.path.exists(fpath) and os.path.isfile(fpath):
+            print("valid pid file : ", fpath)
+            vad[pid_list[i]] = pd.read_csv(fpath, header=None).to_numpy()
 
+    if len(vad) == 0:
+        print('load_vad called but nothing loaded.')
+    print("type : ", type(vad))
+    return vad
+
+
+# make vad files
+from pathlib import Path
 
 if __name__ == '__main__':
     for f in Path(diarizations_path).glob('*.rttm'):
@@ -128,7 +142,26 @@ if __name__ == '__main__':
         out_path : output path
         生成一个人的vad
         '''
-        print("这也没有？")
+
         store_vad(df, pid, out_path)
 
-    print("什么J8")
+# if __name__ == '__main__':
+#     pid_list = [2, 3, 4, 5, 7, 10, 11, 17, 18, 22, 23, 27, 34, 35]  # len = 14
+#     vad_dict = load_vad(vad_path, pid_list)
+#     print("keys: ", vad_dict.keys())
+#     for i in range(0, len(pid_list)):
+#         print("i : ", i, " pid = ", pid_list[i])
+#         pos_example_time_list, label_pos = generate_positive_sample(vad_dict[pid_list[i]])
+#         neg_example_time_list, label_neg = generate_negative_sample(vad_dict[pid_list[i]])
+#         time_window = pos_example_time_list + neg_example_time_list
+#         # write csv
+#         with open('./po_ne_csv/' + str(pid_list[i]) + '.csv', "w") as f:
+#             csv_writer_new = csv.writer(f)
+#             for time_tuple in time_window:
+#                 csv_writer_new.writerow(time_tuple)
+#
+#
+#         with open('./target_label/' + str(pid_list[i]) + '.csv', "w") as f:
+#             csv_writer_new = csv.writer(f)
+#             for time_tuple in time_window:
+#                 csv_writer_new.writerow(time_tuple)
