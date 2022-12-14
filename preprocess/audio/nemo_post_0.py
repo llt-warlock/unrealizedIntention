@@ -4,6 +4,7 @@ from random import random
 
 import numpy as np
 import pandas as pd
+from scipy.io import wavfile
 from scipy.io.wavfile import write as wavwrite, read as wavread
 from constants import (processed_audio_path)
 
@@ -64,20 +65,22 @@ main_speakers = {
 import numpy as np
 from scipy.io.wavfile import write as wavwrite
 
-
 '''
 Generate positive example from vad files
 '''
+
+
 def generate_positive_sample(vad, size=9900, fs=100):
     valid = True
     intention_time_window = []
     intention_label = np.zeros((size * fs))
-    change = False
+    previous_is_zero = True
     for i in range(0, len(vad)):
-        if vad[i] == 1 and i - 200 >= 0 and not change:
-            change = True
+        if (vad[i] == 1) and (i - 200 >= 0) and previous_is_zero:
+            previous_is_zero = False
             # check valid time window
-            for j in range(i, i - 200, -1):
+            for j in range(i - 1, i - 200 - 1, -1):
+                print(j)
                 if vad[j] == 1:
                     valid = False
                     break
@@ -89,8 +92,10 @@ def generate_positive_sample(vad, size=9900, fs=100):
                 intention_time_window.append(tuple([time_ini, time_end]))
                 intention_label[time_ini:time_end] = 1
 
-        if vad[i] == 0 and change:
-            change = False
+        if vad[i] == 0 and not previous_is_zero:
+            previous_is_zero = True
+
+        valid = True
 
     return intention_time_window, intention_label
 
@@ -98,6 +103,8 @@ def generate_positive_sample(vad, size=9900, fs=100):
 '''
 Generate intention time window, and vad fiels from ".rttm" files. 
 '''
+
+
 def make_vad(df: pd.DataFrame, pid, size=9900, fs=100):
     ''' len is in seconds
     '''
@@ -160,18 +167,23 @@ def load_vad(vad_path_0, pid_list):
 from pathlib import Path
 
 if __name__ == '__main__':
-    for f in Path(diarizations_path).glob('*.rttm'):
-        df = load_diarization(f)
-        pid = int(f.stem)
-        # load corresponding vad file based on rttm files
-        out_path = os.path.join(vad_path, f.stem)
-        print("out_path : ", out_path)
-        '''
-        df : diarization file
-        out_path : output path
-        '''
+    # for f in Path(diarizations_path).glob('*.rttm'):
+    #     df = load_diarization(f)
+    #     pid = int(f.stem)
+    #     # load corresponding vad file based on rttm files
+    #     out_path = os.path.join(vad_path, f.stem)
+    #     print("out_path : ", out_path)
+    #     '''
+    #     df : diarization file
+    #     out_path : output path
+    #     '''
+    #
+    #     store_vad(df, pid, out_path)
 
-        store_vad(df, pid, out_path)
+    temp = wavfile.read('filer_vad/3.wav')
+    a, b = generate_positive_sample(temp[1])
+    print("len a : ", len(a))
+    print(b)
 
 # if __name__ == '__main__':
 #     pid_list = [2, 3, 4, 5, 7, 10, 11, 17, 18, 22, 23, 27, 34, 35]  # len = 14
