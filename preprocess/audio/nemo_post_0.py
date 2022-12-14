@@ -65,9 +65,39 @@ import numpy as np
 from scipy.io.wavfile import write as wavwrite
 
 
+'''
+Generate positive example from vad files
+'''
+def generate_positive_sample(vad, size=9900, fs=100):
+    valid = True
+    intention_time_window = []
+    intention_label = np.zeros((size * fs))
+    change = False
+    for i in range(0, len(vad)):
+        if vad[i] == 1 and i - 200 >= 0 and not change:
+            change = True
+            # check valid time window
+            for j in range(i, i - 200, -1):
+                if vad[j] == 1:
+                    valid = False
+                    break
+
+            # intention 2 seconds window (2 * 100)
+            if valid:
+                time_ini = i - 200
+                time_end = i - 1
+                intention_time_window.append(tuple([time_ini, time_end]))
+                intention_label[time_ini:time_end] = 1
+
+        if vad[i] == 0 and change:
+            change = False
+
+    return intention_time_window, intention_label
 
 
-
+'''
+Generate intention time window, and vad fiels from ".rttm" files. 
+'''
 def make_vad(df: pd.DataFrame, pid, size=9900, fs=100):
     ''' len is in seconds
     '''
