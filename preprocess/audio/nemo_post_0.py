@@ -1,6 +1,6 @@
 import csv
 import os
-from random import random
+import random as rand
 
 import numpy as np
 import pandas as pd
@@ -9,7 +9,7 @@ from scipy.io.wavfile import write as wavwrite, read as wavread
 from constants import (processed_audio_path)
 
 diarizations_path = './rttmFile'
-vad_path = './vad'
+vad_path = './filer_vad/'
 
 
 def load_diarization(fpath):
@@ -65,12 +65,38 @@ main_speakers = {
 import numpy as np
 from scipy.io.wavfile import write as wavwrite
 
+
+def generate_negative_sample(intention_time_window, intention_label, size=9900, fs=100):
+    # negative_intention_label = np.zeros((size * fs))
+    negative_time_sample_size = len(intention_time_window) * 3
+    negative_intention_time_window_list = []
+
+    while len(negative_intention_time_window_list) < negative_time_sample_size:
+        random_point = (rand.randint(0, 9900)) * fs
+
+        # check left side of random point
+        left_point = (random_point - 2) * fs
+
+        if not intention_label[left_point:random_point].__contains__(1):
+            negative_intention_time_window_list.append(tuple([left_point, random_point]))
+            print("negative example : ", random_point - left_point)
+
+        # check right side of random point
+        right_point = (random_point + 2) * fs
+
+        if not intention_label[random_point:right_point].__contains__(1):
+            negative_intention_time_window_list.append(tuple([random_point, right_point]))
+            print("negative example : ", right_point - random_point)
+
+    return negative_intention_time_window_list
+
+
 '''
 Generate positive example from vad files
 '''
 
 
-def generate_positive_sample(vad, size=9900, fs=100):
+def generate_positive_sample_0(vad, size=9900, fs=100):
     valid = True
     intention_time_window = []
     intention_label = np.zeros((size * fs))
@@ -82,7 +108,6 @@ def generate_positive_sample(vad, size=9900, fs=100):
                 previous_is_zero = False
                 # check valid time window
                 for j in range(i - 1, i - 200 - 1, -1):
-                    print(j)
                     if vad[j] == 1:
                         valid = False
                         break
@@ -102,9 +127,68 @@ def generate_positive_sample(vad, size=9900, fs=100):
     return intention_time_window, intention_label
 
 
-'''
-Generate intention time window, and vad fiels from ".rttm" files.
-'''
+def generate_positive_sample(vad, size=9900, fs=100):
+    valid = True
+    intention_time_window = []
+    intention_label = np.zeros((size * fs))
+    previous_is_zero = True
+    for i in range(0, 9900):
+        if i - 2 >= 0:
+
+            if (vad[i * fs] == 1) and previous_is_zero:
+                previous_is_zero = False
+                # check valid time window
+                for j in range(i - 1, i - 2 - 1, -1):
+                    if vad[j * fs] == 1:
+                        valid = False
+                        break
+
+                # intention 2 seconds window (2 * 100)
+                if valid:
+                    time_ini = (i - 2) * fs
+                    time_end = i * fs
+                    intention_time_window.append(tuple([time_ini, time_end]))
+                    intention_label[time_ini:time_end] = 1
+
+            if vad[i * fs] == 0 and not previous_is_zero:
+                previous_is_zero = True
+
+            valid = True
+
+    return intention_time_window, intention_label
+
+
+def generate_positive_sample_0(vad, size=9900, fs=100):
+    valid = True
+    intention_time_window = []
+    intention_label = np.zeros((size * fs))
+    previous_is_zero = True
+    for i in range(0, len(vad)):
+        if i - 200 >= 0:
+
+            if (vad[i] == 1) and previous_is_zero:
+                previous_is_zero = False
+                # check valid time window
+                for j in range(i - 1, i - 200 - 1, -1):
+                    if vad[j] == 1:
+                        valid = False
+                        break
+
+                # intention 2 seconds window (2 * 100)
+                if valid:
+                    time_ini = i - 200
+                    time_end = i - 1
+                    intention_time_window.append(tuple([time_ini, time_end]))
+                    intention_label[time_ini:time_end] = 1
+
+            if vad[i] == 0 and not previous_is_zero:
+                previous_is_zero = True
+
+            valid = True
+
+    return intention_time_window, intention_label
+
+
 def make_vad(df: pd.DataFrame, pid, size=9900, fs=100):
     ''' len is in seconds
     '''
@@ -148,18 +232,13 @@ def store_vad(df: pd.DataFrame, pid, fname, size=9900, fs=100):
     wavwrite(fname + '.wav', fs, vad)
 
 
-def load_vad(vad_path_0, pid_list):
+def load_filter_vad(vad_path_0, pid_list):
     vad = {}
     for i in range(0, len(pid_list)):
-        fpath = os.path.join(vad_path_0, f'{pid_list[i]}.vad')
-        print("fpath : ", fpath)
-        if os.path.exists(fpath) and os.path.isfile(fpath):
-            print("valid pid file : ", fpath)
-            vad[pid_list[i]] = pd.read_csv(fpath, header=None).to_numpy()
-
+        temp = wavfile.read(vad_path + str(pid_list[i]) + ".wav")
+        vad[pid_list[i]] = temp[1]
     if len(vad) == 0:
         print('load_vad called but nothing loaded.')
-    print("type : ", type(vad))
     return vad
 
 
@@ -180,26 +259,35 @@ if __name__ == '__main__':
     #
     #     store_vad(df, pid, out_path)
 
-    temp = wavfile.read('filer_vad/3.wav')
-    a, b = generate_positive_sample(temp[1])
+    # temp = wavfile.read('filer_vad/3.wav')
+    # print(type(temp))
+    # a, b = generate_positive_sample(temp[1])
+    # print(len(a), " : ", len(b))
+    #
+    # c, d = generate_positive_sample_0(temp[1])
+    # print(len(c), " : ", len(d))
+    #
+    # e = generate_negative_sample(a, b)
+    # print(len(e))
 
-# if __name__ == '__main__':
-#     pid_list = [2, 3, 4, 5, 7, 10, 11, 17, 18, 22, 23, 27, 34, 35]  # len = 14
-#     vad_dict = load_vad(vad_path, pid_list)
-#     print("keys: ", vad_dict.keys())
-#     for i in range(0, len(pid_list)):
-#         print("i : ", i, " pid = ", pid_list[i])
-#         pos_example_time_list, label_pos = generate_positive_sample(vad_dict[pid_list[i]])
-#         neg_example_time_list, label_neg = generate_negative_sample(vad_dict[pid_list[i]])
-#         time_window = pos_example_time_list + neg_example_time_list
-#         # write csv
-#         with open('./po_ne_csv/' + str(pid_list[i]) + '.csv', "w") as f:
-#             csv_writer_new = csv.writer(f)
-#             for time_tuple in time_window:
-#                 csv_writer_new.writerow(time_tuple)
-#
-#
-#         with open('./target_label/' + str(pid_list[i]) + '.csv', "w") as f:
-#             csv_writer_new = csv.writer(f)
-#             for time_tuple in time_window:
-#                 csv_writer_new.writerow(time_tuple)
+    pid_list = [2, 3, 4, 5, 7, 10, 11, 17, 18, 22, 23, 27, 34, 35]  # len = 14
+    vad_dict = load_filter_vad(vad_path, pid_list)
+    for i in range(0, len(pid_list)):
+        pos_example_time_list, label_pos = generate_positive_sample(vad_dict[pid_list[i]])
+        neg_example_time_list = generate_negative_sample(pos_example_time_list, label_pos)
+        print("len of vad : ", len(label_pos))
+        time_window = pos_example_time_list + neg_example_time_list
+        # write csv
+        with open('./po_ne_csv/' + str(pid_list[i]) + '.csv', "w") as f:
+            csv_writer_new = csv.writer(f)
+            print("time type : ", type(time_window))
+            for time_tuple in time_window:
+                csv_writer_new.writerow(time_tuple)
+
+        outfile = open('./target_label/' + str(pid_list[i]) + '.csv', "w", newline='')
+        out = csv.writer(outfile)
+        out.writerows(map(lambda x: [x], label_pos))
+        outfile.close()
+
+
+
