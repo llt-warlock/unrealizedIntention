@@ -18,7 +18,8 @@ from constants import (
     balloon_pop_3_accel_frame
 )
 
-csv_path = "../preprocess/audio/vad/"
+# csv_path = "../preprocess/audio/vad/"
+csv_path = "../preprocess/audio/po_ne_csv/"
 
 
 def reset_examples_ids(examples):
@@ -49,16 +50,17 @@ class Maker():
         self.accel = pickle.load(open('../data/subj_accel_interp.pkl', 'rb'))
 
     def load_vad(self, vad_path):
+        print(" in load vad ")
+        # load csv directly
         self.vad = {}
-        for i in range(1, 45):
-            fpath = os.path.join(vad_path, f'{i}.vad')
-            if os.path.exists(fpath) and os.path.isfile(fpath):
-                self.vad[i] = pd.read_csv(fpath, header=None).to_numpy()
-                print(i, " : ", "  length : ", len(self.vad[i]))
+        pid_list = [2, 3, 4, 5, 7, 10, 11, 17, 18, 22, 23, 27, 34, 35]
+        for i in pid_list:
+            fpath = os.path.join(vad_path, f'{i}.csv')
+
+            self.vad[i] = pd.read_csv(fpath, header=None).to_numpy()
 
         if len(self.vad) == 0:
             print('load_vad called but nothing loaded.')
-        print("type : ", type(self.vad))
 
     # set time window
     def _get_vad(self, pid, ini_time, end_time, vad_fs=100):
@@ -66,23 +68,18 @@ class Maker():
         if pid not in self.vad:
             return None
 
-        # ini = round(ini_time * vad_fs)
-        # width = round((end_time - ini_time) * vad_fs)
-        # end = ini + width
-
-        return self.vad[pid][ini_time:end_time].flatten()
-
-    # def _interp_vad(self, vad, in_fs, out_fs):
-    #     t = np.arange(0, len(vad) / in_fs, 1 / in_fs)
-    #     f = interp1d(t, vad, kind='nearest')
-    #     tnew = np.arange(0, len(vad) / in_fs, 1 / out_fs)
-    #     return f(tnew)
+        #if len(self.vad[pid][ini_time * vad_fs: end_time * vad_fs]) == 0:
+            # print(self.vad[pid][ini_time * vad_fs: end_time * vad_fs])
+        unique, counts = np.unique(self.vad[pid][ini_time*100: end_time*100], return_counts=True)
+        print(" valid time : ",  len(self.vad[pid][ini_time*100: end_time*100]), "ini : ", ini_time, " end : ", end_time,  "! : ", dict(zip(unique, counts)))
+        return self.vad[pid][ini_time*100: end_time*100].flatten()
 
     def make_examples(self, window_len=60):
         examples = list()
         example_id = 0
 
-        valid_list = [2, 3, 4, 5, 7, 10, 11, 12, 14, 15, 17, 18, 19, 22, 23, 24, 26, 27, 30, 31, 32, 33, 34, 35]
+        # valid_list = [2, 3, 4, 5, 7, 10, 11, 12, 14, 15, 17, 18, 19, 22, 23, 24, 26, 27, 30, 31, 32, 33, 34, 35]
+        valid_list = [2, 3, 4, 5, 7, 10, 11, 17, 18, 22, 23, 27, 34, 35]
         for i in valid_list:
             time_window_list = []
             # read corresponding csv
@@ -91,15 +88,16 @@ class Maker():
 
                 for line in reader:
                     if line:
-                        #print("line : ", line)
                         time_window_list.append(tuple([int(line[0]), int(line[1])]))
 
             # add into example
             for j in range(0, len(time_window_list)):
+                print(" j : ", j)
                 ini_time = time_window_list[j][0]
                 end_time = time_window_list[j][1]
 
                 temp_vad = self._get_vad(i, ini_time, end_time)
+                print("temp vad: ", temp_vad)
 
                 examples.append({
                     'id': example_id,
@@ -112,8 +110,6 @@ class Maker():
                 example_id += 1
 
         self.examples = examples
-
-        print("length of examples is !  : ", len(examples), " type of example : ", type(examples[0]))
 
         return examples
 

@@ -39,7 +39,7 @@ def do_cross_validation(do_train, ds, input_modalities, seed, prefix=None, deter
     # cv_splits : [array, array, array, ...]
     # split data into 3 sets
     cv_splits = list(GroupKFold(n_splits=3).split(range(len(ds)), groups=ds.get_groups()))
-    print(cv_splits)
+    print("csv_splits: ", cv_splits)
     all_results = []
 
     for f, (train_idx, test_idx) in enumerate(cv_splits):
@@ -47,6 +47,8 @@ def do_cross_validation(do_train, ds, input_modalities, seed, prefix=None, deter
         if f == 0 or f == 1:
             continue
         # load feature caches for fold f
+        #
+
         train_ds = FatherDatasetSubset(ds, train_idx, eval=False)
         test_ds = FatherDatasetSubset(ds, test_idx, eval=True)
 
@@ -75,7 +77,9 @@ def do_cross_validation(do_train, ds, input_modalities, seed, prefix=None, deter
     outputs = [r['proba'].numpy() for r in all_results]
     indices = [r['index'].numpy() for r in all_results]
     metrics = [r['metric'] for r in all_results]
-    return metrics, outputs, indices
+    precision = [r['precision'] for r in all_results]
+    recall = [r['recall'] for r in all_results]
+    return metrics, outputs, indices, precision, recall
 
 
 def do_run(examples, input_modalities,
@@ -100,7 +104,7 @@ def do_run(examples, input_modalities,
     ds = FatherDataset(examples, extractors)
 
     seed = 22
-    metrics, probas, indices = do_cross_validation(
+    metrics, probas, indices, precision, recall  = do_cross_validation(
         do_train,
         ds,
         input_modalities=input_modalities,
@@ -114,14 +118,16 @@ def do_run(examples, input_modalities,
         'metrics': metrics,
         'probas': probas,
         'indices': indices,
-        'seed': seed
+        'seed': seed,
+        'precision':precision,
+        'recall':recall
     }
 
 
 def get_table(do_train=True, deterministic=True):
     # examples = pickle.load(open(examples_path, 'rb'))
     # data set
-    examples = pickle.load(open("../data/examples.pkl", 'rb'))
+    examples = pickle.load(open("../data/INTS_examples_12_16.pkl", 'rb'))
 
     all_input_modalities = [
         # ('video',),
@@ -130,6 +136,9 @@ def get_table(do_train=True, deterministic=True):
     ]
 
     res = {}
+    '''
+    examples: 输入的数据
+    '''
     for input_modalities in all_input_modalities:
         run_results = do_run(
             examples,

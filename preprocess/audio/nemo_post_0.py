@@ -72,85 +72,52 @@ def generate_negative_sample(intention_time_window, intention_label, size=9900, 
     negative_intention_time_window_list = []
 
     while len(negative_intention_time_window_list) < negative_time_sample_size:
-        random_point = (rand.randint(0, 9900)) * fs
+        random_point = (rand.randint(0, 9900))
 
         # check left side of random point
-        left_point = (random_point - 2) * fs
+        left_point = random_point - 2
 
-        if not intention_label[left_point:random_point].__contains__(1):
+        if not intention_label[left_point*fs:random_point*fs].__contains__(1):
             negative_intention_time_window_list.append(tuple([left_point, random_point]))
-            print("negative example : ", random_point - left_point)
 
         # check right side of random point
-        right_point = (random_point + 2) * fs
+        right_point = random_point + 2
 
-        if not intention_label[random_point:right_point].__contains__(1):
+        if not intention_label[random_point*fs:right_point*fs].__contains__(1):
             negative_intention_time_window_list.append(tuple([random_point, right_point]))
-            print("negative example : ", right_point - random_point)
 
     return negative_intention_time_window_list
 
 
-'''
-Generate positive example from vad files
-'''
-
-
-def generate_positive_sample_0(vad, size=9900, fs=100):
-    valid = True
-    intention_time_window = []
-    intention_label = np.zeros((size * fs))
-    previous_is_zero = True
-    for i in range(0, len(vad)):
-        if i - 200 >= 0:
-
-            if (vad[i] == 1) and previous_is_zero:
-                previous_is_zero = False
-                # check valid time window
-                for j in range(i - 1, i - 200 - 1, -1):
-                    if vad[j] == 1:
-                        valid = False
-                        break
-
-                # intention 2 seconds window (2 * 100)
-                if valid:
-                    time_ini = i - 200
-                    time_end = i - 1
-                    intention_time_window.append(tuple([time_ini, time_end]))
-                    intention_label[time_ini:time_end] = 1
-
-            if vad[i] == 0 and not previous_is_zero:
-                previous_is_zero = True
-
-            valid = True
-
-    return intention_time_window, intention_label
 
 
 def generate_positive_sample(vad, size=9900, fs=100):
     valid = True
     intention_time_window = []
     intention_label = np.zeros((size * fs))
+    print("len of intention_label: ",len(intention_label))
+    unique, counts = np.unique(intention_label, return_counts=True)
+    print(dict(zip(unique, counts)))
     previous_is_zero = True
-    for i in range(0, 9900):
+    for i in range(0, size):
         if i - 2 >= 0:
 
-            if (vad[i * fs] == 1) and previous_is_zero:
+            if (vad[i*fs] == 1) and previous_is_zero:
                 previous_is_zero = False
                 # check valid time window
-                for j in range(i - 1, i - 2 - 1, -1):
-                    if vad[j * fs] == 1:
+                for j in range((i - 1)*fs, (i - 2 - 1)*fs, -1):
+                    if vad[j] == 1:
                         valid = False
                         break
 
                 # intention 2 seconds window (2 * 100)
                 if valid:
-                    time_ini = (i - 2) * fs
-                    time_end = i * fs
+                    time_ini = i - 2
+                    time_end = i
                     intention_time_window.append(tuple([time_ini, time_end]))
-                    intention_label[time_ini:time_end] = 1
+                    intention_label[time_ini*fs:time_end*fs] = 1
 
-            if vad[i * fs] == 0 and not previous_is_zero:
+            if vad[i*fs] == 0 and not previous_is_zero:
                 previous_is_zero = True
 
             valid = True
@@ -272,19 +239,20 @@ if __name__ == '__main__':
 
     pid_list = [2, 3, 4, 5, 7, 10, 11, 17, 18, 22, 23, 27, 34, 35]  # len = 14
     vad_dict = load_filter_vad(vad_path, pid_list)
-    for i in range(0, len(pid_list)):
-        pos_example_time_list, label_pos = generate_positive_sample(vad_dict[pid_list[i]])
+    for k in range(0, len(pid_list)):
+        pos_example_time_list, label_pos = generate_positive_sample(vad_dict[pid_list[k]])
+        # unique, counts = np.unique(label_pos, return_counts=True)
+        # print(" len of label : ", len(label_pos))
+        # print(dict(zip(unique, counts)))
         neg_example_time_list = generate_negative_sample(pos_example_time_list, label_pos)
-        print("len of vad : ", len(label_pos))
         time_window = pos_example_time_list + neg_example_time_list
         # write csv
-        with open('./po_ne_csv/' + str(pid_list[i]) + '.csv', "w") as f:
+        with open('./po_ne_csv/' + str(pid_list[k]) + '.csv', "w") as f:
             csv_writer_new = csv.writer(f)
-            print("time type : ", type(time_window))
             for time_tuple in time_window:
                 csv_writer_new.writerow(time_tuple)
 
-        outfile = open('./target_label/' + str(pid_list[i]) + '.csv', "w", newline='')
+        outfile = open('./target_label/' + str(pid_list[k]) + '.csv', "w", newline='')
         out = csv.writer(outfile)
         out.writerows(map(lambda x: [x], label_pos))
         outfile.close()
