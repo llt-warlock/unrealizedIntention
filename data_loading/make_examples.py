@@ -10,7 +10,7 @@ from utils import (
 
 def make_all_examples():
     processed_accel_path = "../data/subj_accel_interp.pkl"
-    #vad_path = "../filer_vad/"
+    #vad_path = "../filter_vad/"
     examples = []
     # for cam in [2, 3]:
     #     tracks_path = os.path.join(processed_pose_path, 'tracks', f'cam{cam}_final.pkl')

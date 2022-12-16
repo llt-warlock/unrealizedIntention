@@ -9,7 +9,7 @@ from scipy.io.wavfile import write as wavwrite, read as wavread
 from constants import (processed_audio_path)
 
 diarizations_path = './rttmFile'
-vad_path = './filer_vad/'
+vad_path = 'filter_vad/'
 
 
 def load_diarization(fpath):
@@ -226,7 +226,7 @@ if __name__ == '__main__':
     #
     #     store_vad(df, pid, out_path)
 
-    # temp = wavfile.read('filer_vad/3.wav')
+    # temp = wavfile.read('filter_vad/3.wav')
     # print(type(temp))
     # a, b = generate_positive_sample(temp[1])
     # print(len(a), " : ", len(b))
