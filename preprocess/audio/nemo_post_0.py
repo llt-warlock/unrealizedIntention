@@ -76,35 +76,35 @@ def generate_positive_sample(vad, size=9900, fs=100):
     intention_label = np.zeros((size * fs))
     previous_is_zero = True
     for i in range(0, len(vad)):
-        if (vad[i] == 1) and (i - 200 >= 0) and previous_is_zero:
-            previous_is_zero = False
-            # check valid time window
-            for j in range(i - 1, i - 200 - 1, -1):
-                print(j)
-                if vad[j] == 1:
-                    valid = False
-                    break
+        if i - 200 >= 0:
 
-            # intention 2 seconds window (2 * 100)
-            if valid:
-                time_ini = i - 200
-                time_end = i - 1
-                intention_time_window.append(tuple([time_ini, time_end]))
-                intention_label[time_ini:time_end] = 1
+            if (vad[i] == 1) and previous_is_zero:
+                previous_is_zero = False
+                # check valid time window
+                for j in range(i - 1, i - 200 - 1, -1):
+                    print(j)
+                    if vad[j] == 1:
+                        valid = False
+                        break
 
-        if vad[i] == 0 and not previous_is_zero:
-            previous_is_zero = True
+                # intention 2 seconds window (2 * 100)
+                if valid:
+                    time_ini = i - 200
+                    time_end = i - 1
+                    intention_time_window.append(tuple([time_ini, time_end]))
+                    intention_label[time_ini:time_end] = 1
 
-        valid = True
+            if vad[i] == 0 and not previous_is_zero:
+                previous_is_zero = True
+
+            valid = True
 
     return intention_time_window, intention_label
 
 
 '''
-Generate intention time window, and vad fiels from ".rttm" files. 
+Generate intention time window, and vad fiels from ".rttm" files.
 '''
-
-
 def make_vad(df: pd.DataFrame, pid, size=9900, fs=100):
     ''' len is in seconds
     '''
@@ -182,8 +182,6 @@ if __name__ == '__main__':
 
     temp = wavfile.read('filer_vad/3.wav')
     a, b = generate_positive_sample(temp[1])
-    print("len a : ", len(a))
-    print(b)
 
 # if __name__ == '__main__':
 #     pid_list = [2, 3, 4, 5, 7, 10, 11, 17, 18, 22, 23, 27, 34, 35]  # len = 14
