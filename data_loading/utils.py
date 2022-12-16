@@ -71,12 +71,16 @@ class Maker():
         #if len(self.vad[pid][ini_time * vad_fs: end_time * vad_fs]) == 0:
             # print(self.vad[pid][ini_time * vad_fs: end_time * vad_fs])
         unique, counts = np.unique(self.vad[pid][ini_time*100: end_time*100], return_counts=True)
-        print(" valid time : ",  len(self.vad[pid][ini_time*100: end_time*100]), "ini : ", ini_time, " end : ", end_time,  "! : ", dict(zip(unique, counts)))
+        #print(" valid time : ",  len(self.vad[pid][ini_time*100: end_time*100]), "ini : ", ini_time, " end : ", end_time,  "! : ", dict(zip(unique, counts)))
         return self.vad[pid][ini_time*100: end_time*100].flatten()
 
     def make_examples(self, window_len=60):
         examples = list()
         example_id = 0
+
+        label_1 = 0
+        label_0 = 0
+
 
         # valid_list = [2, 3, 4, 5, 7, 10, 11, 12, 14, 15, 17, 18, 19, 22, 23, 24, 26, 27, 30, 31, 32, 33, 34, 35]
         valid_list = [2, 3, 4, 5, 7, 10, 11, 17, 18, 22, 23, 27, 34, 35]
@@ -89,15 +93,30 @@ class Maker():
                 for line in reader:
                     if line:
                         time_window_list.append(tuple([int(line[0]), int(line[1])]))
-
+            counter = 0
             # add into example
             for j in range(0, len(time_window_list)):
-                print(" j : ", j)
+                counter = 0
                 ini_time = time_window_list[j][0]
                 end_time = time_window_list[j][1]
 
                 temp_vad = self._get_vad(i, ini_time, end_time)
-                print("temp vad: ", temp_vad)
+                #print("temp vad: ", temp_vad)
+
+                if j % 2 == 0:
+                    temp_vad[:] = 0
+                else:
+                    temp_vad[:] = 1
+
+                # if len(temp_vad)==0:
+                #     print()
+                #     print(i, "   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ", ini_time, "   ", end_time)
+
+                if temp_vad[22] ==1.0 and temp_vad[124]== 1.0:
+                    label_1 += 1
+                if temp_vad[22] == 0.0 and temp_vad[124] == 0.0:
+                    label_0 += 1
+
 
                 examples.append({
                     'id': example_id,
@@ -110,6 +129,8 @@ class Maker():
                 example_id += 1
 
         self.examples = examples
+
+        print("label 1 : ", label_1,  "   label 0 : ", label_0)
 
         return examples
 

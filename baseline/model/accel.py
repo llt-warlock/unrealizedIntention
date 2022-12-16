@@ -29,14 +29,21 @@ class ResNetBodyNoChannelPool(Module):
     def __init__(self, c_in):
         nf = 64
         kss=[7, 5, 3]
+        # 3， 64
         self.resblock1 = ResBlock(c_in, nf, kss=kss)
+        # 64, 128
         self.resblock2 = ResBlock(nf, nf * 2, kss=kss)
+        # 128, 128
         self.resblock3 = ResBlock(nf * 2, nf * 2, kss=kss)
 
     def forward(self, x):
+        #print("0 x shape : ", x.shape)
         x = self.resblock1(x)
+        #print("1 x shape : ", x.shape)
         x = self.resblock2(x)
+        #print("2 x shape : ", x.shape)
         x = self.resblock3(x)
+        #print("3 x shape : ", x.shape)
         return x
 
 
@@ -52,6 +59,7 @@ class ResNetBody(Module):
         return x
 
 class SegmentationHead(Module):
+    # c_out = 1, output_len = 45
     def __init__(self, c_out, output_len, kss=[3, 3, 3]):
         self.convblock1 = ConvBlock(128, 64, kss[0])
         self.convblock2 = ConvBlock(64, 64, kss[1])
@@ -59,15 +67,19 @@ class SegmentationHead(Module):
 
         self.upsample = nn.Sequential(
             nn.Flatten(start_dim=2),
-            nn.Upsample(size=(output_len), mode='linear')
+            nn.Upsample(size=200, mode='linear')
         )
 
 
     def forward(self, x):
+        #print("head 0 shape : ", x.shape)
         x = self.convblock1(x)
+        #print("head 1 shape : ", x.shape)
         x = self.convblock2(x)
+        #print("head 2 shape : ", x.shape)
         x = self.convblock3(x)
-
+        #print("head 3 shape : ", x.shape)
         x = self.upsample(x)
-
+        #print("head 4 shape : ", x.shape)
+        #print("head 5 shape : ", x.squeeze().shape)
         return x.squeeze()

@@ -36,8 +36,6 @@ class System(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         output = self.model(batch).squeeze()
         loss = self.loss_fn(output, batch['label'].float())
-        print("train output : ", output)
-        print("train loss : ", loss)
 
         # Logging to TensorBoard by default
         self.log("train_loss", loss)
@@ -51,10 +49,14 @@ class System(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         output = self.model(batch)
         t = output.squeeze()
-        print("type batch : ", type(batch))
         # for k, y in batch.items():
         #     print("key : ", k, " value type : " , type(y), " y_shape : ", y.shape)
-        print("output shape : ", t.shape, "  batch shape : ", batch['label'].shape, " output : ", t, " label : ", batch['label'])
+        #print("output shape : ", t.shape, "  batch shape : ", batch['label'].shape, " output : ", t, " label : ", batch['label'])
+        #val_loss = self.loss_fn(t, batch['label'].float())
+
+
+        #val_loss = self.loss_fn(t, batch['label'].float().reshape(-1,))
+
         val_loss = self.loss_fn(t, batch['label'].float())
         self.log('val_loss', val_loss)
 
@@ -63,8 +65,7 @@ class System(pl.LightningModule):
     def validation_epoch_end(self, validation_step_outputs):
         all_outputs = torch.cat([o[0] for o in validation_step_outputs]).cpu()
         all_labels = torch.cat([o[1] for o in validation_step_outputs]).cpu()
-        print("all output : ", all_outputs)
-        print("all labels : ", all_labels)
+
 
         val_metric = self.performance_metric(all_outputs, all_labels)
         self.log('val_metric', val_metric)
@@ -75,6 +76,13 @@ class System(pl.LightningModule):
         return (output, batch['index'], batch['label'])
 
     def test_epoch_end(self, test_step_outputs):
+
+        print("test_epoch_end : ")
+        for i in range(0,len(test_step_outputs)):
+            temp = test_step_outputs[i]
+
+            #print(i ,"  ####################### ", temp[2].shape)
+
         all_outputs = torch.cat([o[0] for o in test_step_outputs]).cpu()
         all_indices = torch.cat([o[1] for o in test_step_outputs]).cpu()
         all_labels = torch.cat([o[2] for o in test_step_outputs]).cpu()
@@ -111,7 +119,6 @@ def train(i, train_ds, val_ds, modalities,
 
     # data loaders
     batch_size = 32
-    #batch_size = 1
 
     g = torch.Generator()
     g.manual_seed(729387+i)

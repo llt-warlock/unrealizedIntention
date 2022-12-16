@@ -68,7 +68,7 @@ from scipy.io.wavfile import write as wavwrite
 
 def generate_negative_sample(intention_time_window, intention_label, size=9900, fs=100):
     # negative_intention_label = np.zeros((size * fs))
-    negative_time_sample_size = len(intention_time_window) * 3
+    negative_time_sample_size = len(intention_time_window)
     negative_intention_time_window_list = []
 
     while len(negative_intention_time_window_list) < negative_time_sample_size:
@@ -76,15 +76,18 @@ def generate_negative_sample(intention_time_window, intention_label, size=9900, 
 
         # check left side of random point
         left_point = random_point - 2
+        if left_point >= 0:
 
-        if not intention_label[left_point*fs:random_point*fs].__contains__(1):
-            negative_intention_time_window_list.append(tuple([left_point, random_point]))
+            if not intention_label[left_point*fs:random_point*fs].__contains__(1):
+                negative_intention_time_window_list.append(tuple([left_point, random_point]))
 
         # check right side of random point
         right_point = random_point + 2
 
-        if not intention_label[random_point*fs:right_point*fs].__contains__(1):
-            negative_intention_time_window_list.append(tuple([random_point, right_point]))
+        if right_point <= 9900:
+
+            if not intention_label[random_point*fs:right_point*fs].__contains__(1):
+                negative_intention_time_window_list.append(tuple([random_point, right_point]))
 
     return negative_intention_time_window_list
 

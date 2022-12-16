@@ -40,10 +40,12 @@ def do_cross_validation(do_train, ds, input_modalities, seed, prefix=None, deter
     # split data into 3 sets
     cv_splits = list(GroupKFold(n_splits=3).split(range(len(ds)), groups=ds.get_groups()))
     print("csv_splits: ", cv_splits)
+    for i in cv_splits:
+        print(" length : ", len(i))
     all_results = []
 
     for f, (train_idx, test_idx) in enumerate(cv_splits):
-        print("f :", f, "   train_idx : ", train_idx, "  test_idx : ", test_idx, "\n")
+        print("f :", f, "   train_idx : ", len(train_idx), "  test_idx : ", len(test_idx), "\n")
         if f == 0 or f == 1:
             continue
         # load feature caches for fold f
