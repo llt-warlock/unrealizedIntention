@@ -103,10 +103,6 @@ class Maker():
                 temp_vad = self._get_vad(i, ini_time, end_time)
                 #print("temp vad: ", temp_vad)
 
-                if j % 2 == 0:
-                    temp_vad[:] = 0
-                else:
-                    temp_vad[:] = 1
 
                 # if len(temp_vad)==0:
                 #     print()
