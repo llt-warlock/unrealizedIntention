@@ -71,7 +71,7 @@ def generate_negative_sample(intention_time_window, intention_label, size=9900, 
     negative_time_sample_size = len(intention_time_window)
     negative_intention_time_window_list = []
 
-    while len(negative_intention_time_window_list) < negative_time_sample_size:
+    while len(negative_intention_time_window_list) < negative_time_sample_size * 3:
         random_point = (rand.randint(0, 9900))
 
         # check left side of random point
@@ -121,37 +121,6 @@ def generate_positive_sample(vad, size=9900, fs=100):
                     intention_label[time_ini*fs:time_end*fs] = 1
 
             if vad[i*fs] == 0 and not previous_is_zero:
-                previous_is_zero = True
-
-            valid = True
-
-    return intention_time_window, intention_label
-
-
-def generate_positive_sample_0(vad, size=9900, fs=100):
-    valid = True
-    intention_time_window = []
-    intention_label = np.zeros((size * fs))
-    previous_is_zero = True
-    for i in range(0, len(vad)):
-        if i - 200 >= 0:
-
-            if (vad[i] == 1) and previous_is_zero:
-                previous_is_zero = False
-                # check valid time window
-                for j in range(i - 1, i - 200 - 1, -1):
-                    if vad[j] == 1:
-                        valid = False
-                        break
-
-                # intention 2 seconds window (2 * 100)
-                if valid:
-                    time_ini = i - 200
-                    time_end = i - 1
-                    intention_time_window.append(tuple([time_ini, time_end]))
-                    intention_label[time_ini:time_end] = 1
-
-            if vad[i] == 0 and not previous_is_zero:
                 previous_is_zero = True
 
             valid = True
@@ -249,6 +218,7 @@ if __name__ == '__main__':
         # print(dict(zip(unique, counts)))
         neg_example_time_list = generate_negative_sample(pos_example_time_list, label_pos)
         time_window = pos_example_time_list + neg_example_time_list
+        np.random.shuffle(time_window)
         # write csv
         with open('./po_ne_csv/' + str(pid_list[k]) + '.csv', "w") as f:
             csv_writer_new = csv.writer(f)
