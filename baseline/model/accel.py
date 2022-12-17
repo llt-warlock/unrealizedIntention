@@ -45,8 +45,7 @@ c_in = 3
 '''
 class ResNetBodyNoChannelPool(Module):
     def __init__(self, c_in):
-        #nf = 64
-        nf = 40
+        nf = 64
         kss=[7, 5, 3]
         # 3， 64  -> 3 , 40  (data in [3,40])
         self.resblock1 = ResBlock(c_in, nf, kss=kss)
@@ -81,12 +80,12 @@ class ResNetBody(Module):
 class SegmentationHead(Module):
     # c_out = 1, output_len = 45
     def __init__(self, c_out, output_len, kss=[3, 3, 3]):
-        #self.convblock1 = ConvBlock(128, 64, kss[0])
-        self.convblock1 = ConvBlock(80, 40, kss[0])
-        #self.convblock2 = ConvBlock(64, 64, kss[1])
-        self.convblock2 = ConvBlock(40, 40, kss[1])
-        #self.convblock3 = ConvBlock(64, c_out, kss[2], act=None)
-        self.convblock3 = ConvBlock(40, c_out, kss[2], act=None)
+        self.convblock1 = ConvBlock(128, 64, kss[0])
+        #self.convblock1 = ConvBlock(256, 128, kss[0])
+        self.convblock2 = ConvBlock(64, 64, kss[1])
+        #self.convblock2 = ConvBlock(128, 128, kss[1])
+        self.convblock3 = ConvBlock(64, c_out, kss[2], act=None)
+        #self.convblock3 = ConvBlock(128, c_out, kss[2], act=None)
 
         self.upsample = nn.Sequential(
             nn.Flatten(start_dim=2),

@@ -11,7 +11,7 @@ from .accel import (
 class SegmentationFusionModel(torch.nn.Module):
     def __init__(self,
                  modalities,
-                 mask_len=45):
+                 mask_len=200):
         """
         """
         super().__init__()
@@ -37,8 +37,8 @@ class SegmentationFusionModel(torch.nn.Module):
             print(" in train 2: ", u.shape)
             masks.append(u)
 
-        masks = torch.stack(masks, dim=0)
-        masks = masks.mean(dim=0)
+        masks = torch.stack(masks, dim=1)
+        masks = masks.mean(dim=1)
         #print("mask shape : ", masks.shape)
         # average over the new mask dim
         return masks

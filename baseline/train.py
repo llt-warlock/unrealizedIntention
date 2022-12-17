@@ -35,8 +35,10 @@ class System(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         output = self.model(batch).squeeze()
-        loss = self.loss_fn(output, batch['label'].float())
-
+        if output.size(dim=0) == 200:
+            loss = self.loss_fn(output, batch['label'].float().reshape(-1,))
+        else:
+            loss = self.loss_fn(output, batch['label'].float())
         # Logging to TensorBoard by default
         self.log("train_loss", loss)
         return loss
@@ -106,7 +108,7 @@ def _collate_fn(batch):
     return {k: torch.tensor(v) for k,v in batch.items()}
 
 
-def train(train_sample_weight, val_sample_weight, i, train_ds, val_ds, modalities,
+def train(i, train_ds, val_ds, modalities,
         trainer_params={}, prefix=None, task='classification', 
         deterministic=False, eval_every_epoch=False, weights_path=None):
 
