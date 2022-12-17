@@ -44,16 +44,17 @@ class FatherDataset(torch.utils.data.Dataset):
 
     def get_multiple_items(self, idxs):
         examples = [self.examples[idx] for idx in idxs]
-        keys = [(ex['pid'], ex['ini_time'], ex['end_time']) for ex in examples]
 
+        keys = [(ex['pid'], ex['ini_time'], ex['end_time']) for ex in examples]
         items = {}
         for ex_name, extractor in self.extractors.items():
             items[ex_name] = extractor.extract_multiple(keys)
 
         # items['label'] = [np.mean(ex['vad']) >= self.label_threshold for ex in examples]
         items['index'] = idxs
-        items['label'] = np.stack([ex['interp_vad'] for ex in examples])
-
+        # items['label'] = np.stack([ex['interp_vad'] for ex in examples])
+        items['label'] = np.stack([ex['vad'] for ex in examples])
+        print("type : ", type(items['label']), "  ", type(items['label']))
         return items
 
     def get_item(self, idx, eval_mode=False) -> dict:
@@ -65,10 +66,12 @@ class FatherDataset(torch.utils.data.Dataset):
         for ex_name, extractor in self.extractors.items():
             item[ex_name] = extractor(*key)
 
-        item['poses'] = ex['poses']
+        # item['poses'] = ex['poses']
         # item['label'] = np.mean(ex['vad']) >= self.label_threshold
-        item['label'] = ex['interp_vad']
+        # item['label'] = ex['interp_vad']
+        item['label'] = ex['vad']
         item['index'] = idx
+
 
         return item
 
@@ -82,7 +85,12 @@ class FatherDataset(torch.utils.data.Dataset):
         return len(self.examples)
 
     def get_all_labels(self):
-        return [np.mean(ex['vad']) >= self.label_threshold for ex in self.examples]
+        # return [np.mean(ex['vad']) >= self.label_threshold for ex in self.examples]
+
+        # res = [ex['vad'] for ex in self.examples]
+        # print("res shape : ", res.shape)
+
+        return [ex['vad'] for ex in self.examples]
 
     def get_groups(self):
         return [f'{ex["pid"]}' for ex in self.examples]

@@ -50,6 +50,28 @@ def do_cross_validation(do_train, ds, input_modalities, seed, prefix=None, deter
             continue
         # load feature caches for fold f
         #
+        # ###########################  make weight :
+        train_all_label = ds.get_all_labels()
+        temp = np.take(train_all_label,train_idx)
+        temp_tensor = torch.from_numpy(temp)
+        class_sample_count = torch.tensor(
+            [(temp_tensor == t).sum() for t in torch.unique(temp_tensor, sorted=True)])
+        weight = 1. / class_sample_count.float()
+        train_samples_weight = torch.tensor([weight[int(t)] for t in temp_tensor])
+        print("train : ", weight, train_samples_weight)
+
+
+        ########  val weight
+        train_all_label = ds.get_all_labels()
+        temp_val = np.take(train_all_label,test_idx)
+        temp_val_tensor = torch.from_numpy(temp_val)
+        class_val_sample_count = torch.tensor(
+            [(temp_val_tensor == t).sum() for t in torch.unique(temp_val_tensor, sorted=True)])
+        val_weight = 1. / class_val_sample_count.float()
+        val_samples_weight = torch.tensor([val_weight[int(t)] for t in temp_val_tensor])
+        print("val : ", val_weight, val_samples_weight)
+
+        ################################################
 
         train_ds = FatherDatasetSubset(ds, train_idx, eval=False)
         test_ds = FatherDatasetSubset(ds, test_idx, eval=True)
@@ -61,7 +83,7 @@ def do_cross_validation(do_train, ds, input_modalities, seed, prefix=None, deter
 
         pl.utilities.seed.seed_everything(seed + f + 734890573)
         if do_train:
-            trainer = train(f, train_ds, test_ds, input_modalities,
+            trainer = train(train_samples_weight, val_samples_weight, f, train_ds, test_ds, input_modalities,
                             prefix=prefix + f'_fold{f}' if prefix else None,
                             eval_every_epoch=True,
                             deterministic=deterministic,

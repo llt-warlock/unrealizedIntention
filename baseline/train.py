@@ -8,7 +8,7 @@ import pytorch_lightning as pl
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, average_precision_score, \
     precision_recall_curve
 from torch.utils.data.dataloader import DataLoader
-from torch.utils.data.sampler import BatchSampler, RandomSampler, SequentialSampler
+from torch.utils.data.sampler import BatchSampler, RandomSampler, SequentialSampler, WeightedRandomSampler
 
 from model import SegmentationFusionModel
 
@@ -106,22 +106,30 @@ def _collate_fn(batch):
     return {k: torch.tensor(v) for k,v in batch.items()}
 
 
-def train(i, train_ds, val_ds, modalities, 
+def train(train_sample_weight, val_sample_weight, i, train_ds, val_ds, modalities,
         trainer_params={}, prefix=None, task='classification', 
         deterministic=False, eval_every_epoch=False, weights_path=None):
 
     num_epochs = {
         ('audio',): 10,
-        ('accel',): 0,
+        ('accel',): 10,
         ('video',): 15,
         ('audio', 'video', 'accel'): 15
     }
+
+    print("type : ", train_ds)
+
 
     # data loaders
     batch_size = 32
 
     g = torch.Generator()
     g.manual_seed(729387+i)
+
+
+    print("train_ds : ", type(train_ds))
+
+    # create WeightedRandomSampler to solve the unblanced data
 
     data_loader_train = DataLoader(
         dataset=train_ds,
@@ -134,14 +142,28 @@ def train(i, train_ds, val_ds, modalities,
         collate_fn=_collate_fn
     )
 
+    # data_loader_train = DataLoader(
+    #     dataset=train_ds,
+    #     # This line below!
+    #     sampler=WeightedRandomSampler(train_sample_weight, len(train_sample_weight), replacement=True),
+    #     batch_size=32,
+    #     num_workers=8,
+    #     generator=g,
+    #     collate_fn=_collate_fn
+    # )
+
+
     # g = torch.Generator()
     # g.manual_seed(897689769+i)
+
     data_loader_val = DataLoader(
         dataset=val_ds,
         # This line below!
         sampler=BatchSampler(
             SequentialSampler(val_ds), batch_size=batch_size, drop_last=False
         ),
+        #sampler=WeightedRandomSampler(val_sample_weight, len(val_sample_weight), replacement=True),
+        #batch_size=32,
         num_workers=8,
         generator=g,
         collate_fn=_collate_fn
