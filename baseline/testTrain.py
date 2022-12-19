@@ -179,5 +179,6 @@ if __name__ == '__main__':
     try:
         res = get_table(do_train=True, deterministic=False)
         print(res)
+
     except Exception:
         print(traceback.format_exc())

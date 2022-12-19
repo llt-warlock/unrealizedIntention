@@ -104,16 +104,6 @@ class Maker():
                 #print("temp vad: ", temp_vad)
 
 
-                # if len(temp_vad)==0:
-                #     print()
-                #     print(i, "   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ", ini_time, "   ", end_time)
-
-                if temp_vad[22] ==1.0 and temp_vad[124]== 1.0:
-                    label_1 += 1
-                if temp_vad[22] == 0.0 and temp_vad[124] == 0.0:
-                    label_0 += 1
-
-
                 examples.append({
                     'id': example_id,
                     'pid': i,

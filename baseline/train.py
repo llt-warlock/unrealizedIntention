@@ -114,7 +114,7 @@ def train(i, train_ds, val_ds, modalities,
 
     num_epochs = {
         ('audio',): 10,
-        ('accel',): 10,
+        ('accel',): 0,
         ('video',): 15,
         ('audio', 'video', 'accel'): 15
     }

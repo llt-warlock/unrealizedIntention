@@ -49,6 +49,7 @@ class FatherDataset(torch.utils.data.Dataset):
         items = {}
         for ex_name, extractor in self.extractors.items():
             items[ex_name] = extractor.extract_multiple(keys)
+            print("ex_name : ", type(ex_name), "   !!!  extractor  ", type(extractor))
 
         # items['label'] = [np.mean(ex['vad']) >= self.label_threshold for ex in examples]
         items['index'] = idxs
