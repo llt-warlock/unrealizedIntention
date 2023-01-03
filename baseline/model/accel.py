@@ -10,7 +10,7 @@ from torchsummary import summary
 
 class ResBlock(Module):
     def __init__(self, ni, nf, kss=[7, 5, 3]):
-        print( ni , " x ", nf)
+        #print( ni , " x ", nf)
         self.convblock1 = ConvBlock(ni, nf, kss[0])
         #print("convblock1 : ", self.convblock1)
         self.convblock2 = ConvBlock(nf, nf, kss[1])
@@ -20,13 +20,13 @@ class ResBlock(Module):
 
         # expand channels for the sum if necessary
         self.shortcut = BN1d(ni) if ni == nf else ConvBlock(ni, nf, 1, act=None)
-        print(" shortcut : ", self.shortcut)
+        #print(" shortcut : ", self.shortcut)
         self.add = Add()
         self.act = nn.ReLU()
 
     def forward(self, x):
         res = x
-        print("x resBlock 0 shape : ", x.shape)
+        #print("x resBlock 0 shape : ", x.shape)
         x = self.convblock1(x)
         #print("x resBlock 1 shape : ", x.shape)
         x = self.convblock2(x)
@@ -35,7 +35,10 @@ class ResBlock(Module):
         #print("x resBlock 3 shape : ", x.shape)
         x = self.add(x, self.shortcut(res))
         x = self.act(x)
-        print(" output : ", x.shape)
+        #print(" output : ", x.shape)
+
+        #print("after Relu : ", x)
+
         return x
 
 '''
@@ -89,7 +92,7 @@ class SegmentationHead(Module):
 
         self.upsample = nn.Sequential(
             nn.Flatten(start_dim=2),
-            nn.Upsample(size=200, mode='linear')
+            nn.Upsample(size=output_len, mode='linear')
         )
 
 
@@ -101,7 +104,10 @@ class SegmentationHead(Module):
         #print("head 2 shape : ", x.shape)
         x = self.convblock3(x)
         #print("head 3 shape : ", x.shape)
+        #print("before head :",x.shape, "  ", x )
+
         x = self.upsample(x)
+        #print("after head :", x.shape, "  ", x)
         #print("head 4 shape : ", x.shape)
         #print("head 5 shape : ", x.squeeze().shape)
         return x.squeeze()

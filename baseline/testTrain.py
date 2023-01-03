@@ -10,7 +10,8 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold, GroupKFold
 from IPython.display import clear_output
-import pytorch_lightning as pl
+# import pytorch_lightning as pl
+import lightning_lite as pl
 
 logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
 # set the cudnn
@@ -30,24 +31,34 @@ import multiprocessing
 from multiprocessing import Process
 import threading
 
+import matplotlib.pyplot as plt
+
 '''
 do_train : 
 '''
+from model import SegmentationFusionModel
 
 
-def do_cross_validation(do_train, ds, input_modalities, seed, prefix=None, deterministic=False):
+def do_cross_validation(do_train, ds, last_test_ds, input_modalities, seed, prefix=None, deterministic=False):
     # cv_splits : [array, array, array, ...]
     # split data into 3 sets
+    # group number = pid number
+
+    last_test_set_idx = np.arange(len(last_test_ds.examples))
+
+    # print(" len of test ds : ", len(test_ds), " type : ", type(test_ds))
     cv_splits = list(GroupKFold(n_splits=3).split(range(len(ds)), groups=ds.get_groups()))
-    print("csv_splits: ", cv_splits)
-    for i in cv_splits:
-        print(" length : ", len(i))
+    # for i in range(0, len(cv_splits)):
+    #     print("type : ", type(cv_splits[i]),"  : ", len(cv_splits[i][0]), "  # ", len(cv_splits[i][1]))
     all_results = []
+    cross_validation_roc = []
 
     for f, (train_idx, test_idx) in enumerate(cv_splits):
-        print("f :", f, "   train_idx : ", len(train_idx), "  test_idx : ", len(test_idx), "\n")
+        print("f :", f, "   train_idx : ", train_idx, " ", type(train_idx), "  test_idx : ", len(test_idx), "  ",
+              type(test_idx))
         if f == 0 or f == 1:
             continue
+
         # load feature caches for fold f
         #
         # ###########################  make weight :
@@ -76,6 +87,9 @@ def do_cross_validation(do_train, ds, input_modalities, seed, prefix=None, deter
         train_ds = FatherDatasetSubset(ds, train_idx, eval=False)
         test_ds = FatherDatasetSubset(ds, test_idx, eval=True)
 
+        # last test set
+        real_test_ds = FatherDatasetSubset(last_test_ds, last_test_set_idx, eval=True)
+
         weights_path = os.path.join(
             'weights',
             f'I{"-".join(input_modalities)}_fold{f}.ckpt'
@@ -83,30 +97,57 @@ def do_cross_validation(do_train, ds, input_modalities, seed, prefix=None, deter
 
         pl.utilities.seed.seed_everything(seed + f + 734890573)
         if do_train:
-            trainer = train(f, train_ds, test_ds, input_modalities,
-                            prefix=prefix + f'_fold{f}' if prefix else None,
-                            eval_every_epoch=True,
-                            deterministic=deterministic,
-                            weights_path=weights_path)
+            trainer, roc_list = train(f, train_ds, test_ds, input_modalities,
+                                      prefix=prefix + f'_fold{f}' if prefix else None,
+                                      eval_every_epoch=True,
+                                      deterministic=deterministic,
+                                      weights_path=weights_path)
             model = trainer.model
+
+            torch.save(model.state_dict(), "model_version_4_40_10.pt")
+
+            # if best_model is None:
+            #     best_model = model
+            #     best_model_performance = roc_list
+            #
+            # else:
+            #     if roc_list[-1] > best_model_performance[-1]:
+            #         best_model = model
+            #         best_model_performance = roc_list
         else:
-            model = System.load_from_checkpoint(checkpoint_path=weights_path)
+
+            #model = System.load_from_checkpoint(checkpoint_path=weights_path)
+            model = System('accel', 'classification')
+            model.load_state_dict(torch.load("model_version_1_20_10.pt"))
+
+        # select the best model
 
         # ensures that the testing is reproducible regardless of training
         pl.utilities.seed.seed_everything(seed + f + 2980374334)
-        fold_outputs = test(f, model, test_ds, prefix=prefix + f'_fold{f}' if prefix else None, )
+        fold_outputs = test(f, model, real_test_ds, prefix=prefix + f'_fold{f}' if prefix else None, )
         all_results.append(fold_outputs)
+
+        # reuslts for different cross validation set
+        if do_train:
+            roc_list.append(f)
+            cross_validation_roc.append(roc_list)
+            # torch.save(best_model.state_dict(), "best_model.pt")
+
         clear_output(wait=False)
+
+    # save the best model after cross validation
 
     outputs = [r['proba'].numpy() for r in all_results]
     indices = [r['index'].numpy() for r in all_results]
     metrics = [r['metric'] for r in all_results]
     precision = [r['precision'] for r in all_results]
     recall = [r['recall'] for r in all_results]
-    return metrics, outputs, indices, precision, recall
+
+    # return metrics, outputs, indices, precision, recall, roc_list
+    return f, metrics, outputs, indices, precision, recall, cross_validation_roc
 
 
-def do_run(examples, input_modalities,
+def do_run(examples, test_examples, input_modalities,
            do_train=True, deterministic=True, prefix=''):
     ''' train = True will train the models, and requires
             model_label_modality = test_label_modality
@@ -114,7 +155,7 @@ def do_run(examples, input_modalities,
             model_label_modality = test_label_modality
     '''
     print(f'Using {len(examples)} examples')
-
+    print(f'Using {len(test_examples)} test examples')
     # create the feature datasets
     extractors = {}
 
@@ -126,11 +167,14 @@ def do_run(examples, input_modalities,
 
     # extract data based on features selected
     ds = FatherDataset(examples, extractors)
+    test_ds = FatherDataset(test_examples, extractors)
 
     seed = 22
-    metrics, probas, indices, precision, recall  = do_cross_validation(
+
+    f_fold, metrics, probas, indices, precision, recall, cross_validation_roc = do_cross_validation(
         do_train,
         ds,
+        test_ds,
         input_modalities=input_modalities,
         deterministic=deterministic,
         seed=seed,
@@ -139,19 +183,26 @@ def do_run(examples, input_modalities,
     torch.cuda.empty_cache()
 
     return {
-        'metrics': metrics,
-        'probas': probas,
-        'indices': indices,
-        'seed': seed,
-        'precision':precision,
-        'recall':recall
-    }
+               'f_fold': f_fold,
+               'metrics': metrics,
+               'probas': probas,
+               'indices': indices,
+               'seed': seed,
+               'precision': precision,
+               'recall': recall
+           }, cross_validation_roc
 
 
 def get_table(do_train=True, deterministic=True):
     # examples = pickle.load(open(examples_path, 'rb'))
     # data set
-    examples = pickle.load(open("../data/INTS_examples_12_16.pkl", 'rb'))
+    examples = pickle.load(open("../data/INTS_examples_12_24.pkl", 'rb'))
+
+    # test dataset
+    test_examples = pickle.load(open("../data/INTS_examples_test_24.pkl", 'rb'))
+
+    unsuccessful_test_examples = pickle.load(open("../data/INTS_unsuccessful_test_29.pkl", 'rb'))
+
 
     all_input_modalities = [
         # ('video',),
@@ -164,21 +215,59 @@ def get_table(do_train=True, deterministic=True):
     examples: 输入的数据
     '''
     for input_modalities in all_input_modalities:
-        run_results = do_run(
+        run_results, cross_validation_roc = do_run(
             examples,
+            unsuccessful_test_examples,
             input_modalities,
             do_train=do_train,
             deterministic=deterministic)
 
         res['-'.join(input_modalities)] = run_results
-    return res
+    return res, cross_validation_roc  # res
 
 
 if __name__ == '__main__':
 
     try:
-        res = get_table(do_train=True, deterministic=False)
+        res, cross_validation_roc = get_table(do_train=True, deterministic=False)
+
+        # for ks, vs in res.items():
+        #     for k, v in vs.items():
+        #         if k == 'f_fold':
+        #             print("f_fold : ", v, end = "  ")
+        #         if k == "metrics":
+        #             print("metrics : ", v)
+
+        with open('unsuccessful_intention_test.txt', 'w') as f:
+            for ks, vs in res.items():
+                for k, v in vs.items():
+                    if k == "probas":
+                        for index in range(0, len(v)):
+                            #print("len : ", len(v))
+                            for id_index in range(0, len(v[index])):
+                                # print("aaa ", len(v[index])) # 38个人
+                                # print("bbb ", len(v[index][id_index]))
+
+                                f.write("id : " + str(id_index) + " mean prob : " + str(np.mean(v[index][id_index])) + '\n')
+
+        f.close()
+
         print(res)
+
+
+        with open('performance_1_10_2_90.txt', 'w') as f:
+            for i in cross_validation_roc:
+                temp = " "
+                for j in i:
+                    print(j, end="  ")
+                    temp = temp +  " " + str(j)
+
+                f.write(temp + '  \n')
+
+                print("")
+
+        f.close()
+
 
     except Exception:
         print(traceback.format_exc())

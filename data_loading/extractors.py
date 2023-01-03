@@ -31,6 +31,8 @@ class AccelExtractor():
         self.fs = 100
 
     def __call__(self, pid, start, end):
+        #print("pid : ", pid, " start: ", start, " end : ", end)
+
         if self.strict and pid not in self.accel:
             raise ValueError(f'pid {pid} not in self.accel')
         
@@ -49,8 +51,10 @@ class AccelExtractor():
         temp = my_subj_accel[:,0] > accel_ini
         ini_idx = np.argmax(my_subj_accel[:,0] > accel_ini)
         fin_idx = ini_idx + round(self.fs * (end-start))
-        if pid == 35:
-            print("pid : ", pid, " start : ", start,  "end : ", end, "ini_idx : ", ini_idx, " fin_idx : ", fin_idx , " data : ", my_subj_accel[ini_idx,0])
+
+        #if pid == 35:
+
+            #print("pid : ", pid, " start : ", start,  "end : ", end, "ini_idx : ", ini_idx, " fin_idx : ", fin_idx , " data : ", my_subj_accel[ini_idx,0])
 
 
         # if ini_idx == 0:
@@ -61,7 +65,11 @@ class AccelExtractor():
                 ((0, round(self.fs * (end-start))-len(accel)), (0, 0)),
                 mode='constant',
                 constant_values= 0)
-
+        # if accel.transpose().astype(np.float32).shape != (3,300):
+        #     print("start : ", start, ini_idx, " end : ", end, fin_idx)
+        #     print(accel.transpose().astype(np.float32).shape)
+        #     print("aaaaaaaaaaaaa")
+        #print(accel.transpose().astype(np.float32).shape)
         return accel.transpose().astype(np.float32)
 
     def extract_multiple(self, keys):

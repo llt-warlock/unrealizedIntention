@@ -6,11 +6,13 @@ import torch
 import torch.nn.functional as F
 import pytorch_lightning as pl
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, average_precision_score, \
-    precision_recall_curve
+    precision_recall_curve, accuracy_score
 from torch.utils.data.dataloader import DataLoader
 from torch.utils.data.sampler import BatchSampler, RandomSampler, SequentialSampler, WeightedRandomSampler
 
 from model import SegmentationFusionModel
+
+import matplotlib.pyplot as plt
 
 class System(pl.LightningModule):
     def __init__(self, modalities, task='classification'):
@@ -18,7 +20,7 @@ class System(pl.LightningModule):
         self.save_hyperparameters()
        
         # self.model = SegmentationFusionModel(modalities, mask_len=60)
-        self.model = SegmentationFusionModel(modalities, mask_len=300)
+        self.model = SegmentationFusionModel(modalities, mask_len=400)
         self.loss_fn = {
             'classification':F.binary_cross_entropy_with_logits,
             'regression': F.mse_loss,
@@ -28,17 +30,25 @@ class System(pl.LightningModule):
             'classification': lambda input, target: roc_auc_score(target.flatten(), input.flatten()),
             'regression': F.mse_loss,
         }[task]
-
+        self.metric_list = []
 
     def forward(self, x):
         return self.model(x)
 
     def training_step(self, batch, batch_idx):
         output = self.model(batch).squeeze()
-        if output.size(dim=0) == 200:
-            loss = self.loss_fn(output, batch['label'].float().reshape(-1,))
-        else:
-            loss = self.loss_fn(output, batch['label'].float())
+        #output = self.model(batch)
+
+        print("in training step : ", "  output : ", output.shape, " target : ", batch['label'].shape)
+        print(output, "   ", batch['label'])
+
+
+        # if output.size(dim=0) == 200:
+        #     loss = self.loss_fn(output, batch['label'].float().reshape(-1,))
+        # else:
+        loss = self.loss_fn(output, batch['label'].float())
+
+        # loss = self.loss_fn(output, batch['label'].float())
         # Logging to TensorBoard by default
         self.log("train_loss", loss)
         return loss
@@ -51,26 +61,37 @@ class System(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         output = self.model(batch)
         t = output.squeeze()
+        t = output
         # for k, y in batch.items():
         #     print("key : ", k, " value type : " , type(y), " y_shape : ", y.shape)
         #print("output shape : ", t.shape, "  batch shape : ", batch['label'].shape, " output : ", t, " label : ", batch['label'])
         #val_loss = self.loss_fn(t, batch['label'].float())
-
+        # if t.size(dim=0) == 200:
+        #     val_loss = self.loss_fn(t, batch['label'].float().reshape(-1,))
+        # else:
+        val_loss = self.loss_fn(output, batch['label'].float())
 
         #val_loss = self.loss_fn(t, batch['label'].float().reshape(-1,))
 
-        val_loss = self.loss_fn(t, batch['label'].float())
+        # val_loss = self.loss_fn(t, batch['label'].float())
         self.log('val_loss', val_loss)
 
         return (output, batch['label'])
 
     def validation_epoch_end(self, validation_step_outputs):
+        # for o in validation_step_outputs:
+        #     if o[0].size(dim=0) == 200:
+        #         all_outputs = torch.cat([o[0].reshape(-1,) for o in validation_step_outputs]).cpu()
+        #     else:
+        #         all_outputs = torch.cat([o[0] for o in validation_step_outputs]).cpu()
+
         all_outputs = torch.cat([o[0] for o in validation_step_outputs]).cpu()
         all_labels = torch.cat([o[1] for o in validation_step_outputs]).cpu()
 
-
         val_metric = self.performance_metric(all_outputs, all_labels)
         self.log('val_metric', val_metric)
+
+        self.metric_list.append(val_metric)
 
     def test_step(self, batch, batch_idx):
         output = self.model(batch).squeeze()
@@ -79,9 +100,9 @@ class System(pl.LightningModule):
 
     def test_epoch_end(self, test_step_outputs):
 
-        print("test_epoch_end : ")
-        for i in range(0,len(test_step_outputs)):
-            temp = test_step_outputs[i]
+        # print("In test_epoch_end : ")
+        # for i in range(0,len(test_step_outputs)):
+        #     print(type(test_step_outputs[i]), " : ", test_step_outputs[i][0] , "  # ", test_step_outputs[i][1])
 
             #print(i ,"  ####################### ", temp[2].shape)
 
@@ -114,7 +135,7 @@ def train(i, train_ds, val_ds, modalities,
 
     num_epochs = {
         ('audio',): 10,
-        ('accel',): 0,
+        ('accel',): 10,
         ('video',): 15,
         ('audio', 'video', 'accel'): 15
     }
@@ -128,8 +149,6 @@ def train(i, train_ds, val_ds, modalities,
     g = torch.Generator()
     g.manual_seed(729387+i)
 
-
-    print("train_ds : ", type(train_ds))
 
     # create WeightedRandomSampler to solve the unblanced data
 
@@ -187,8 +206,11 @@ def train(i, train_ds, val_ds, modalities,
 
     if weights_path is not None:
         trainer.save_checkpoint(weights_path)
-    
-    return trainer #system.test_results
+
+
+    # trainer.model.test_results
+
+    return trainer, trainer.model.metric_list #system.test_results
 
 def test(i, model, test_ds, prefix=None):
 
@@ -206,6 +228,8 @@ def test(i, model, test_ds, prefix=None):
         generator=g,
         collate_fn=_collate_fn
     )
+
+    print("model version is : ", prefix)
 
     trainer = pl.Trainer(
                 logger= pl.loggers.TensorBoardLogger(
