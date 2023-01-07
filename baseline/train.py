@@ -30,7 +30,10 @@ class System(pl.LightningModule):
             'classification': lambda input, target: roc_auc_score(target.flatten(), input.flatten()),
             'regression': F.mse_loss,
         }[task]
-        self.metric_list = []
+        self.training_loss = []
+        self.training_metric = []
+        self.val_loss_list = []
+        self.val_metric_list = []
 
     def forward(self, x):
         return self.model(x)
@@ -53,6 +56,7 @@ class System(pl.LightningModule):
         self.log("train_loss", loss)
         return loss
 
+
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=.001)
         # optimizer = torch.optim.SGD(self.parameters(), lr=.001, momentum=0.9)
@@ -60,14 +64,12 @@ class System(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         output = self.model(batch)
-        t = output.squeeze()
-        t = output
         # for k, y in batch.items():
         #     print("key : ", k, " value type : " , type(y), " y_shape : ", y.shape)
         #print("output shape : ", t.shape, "  batch shape : ", batch['label'].shape, " output : ", t, " label : ", batch['label'])
         #val_loss = self.loss_fn(t, batch['label'].float())
-        # if t.size(dim=0) == 200:
-        #     val_loss = self.loss_fn(t, batch['label'].float().reshape(-1,))
+        # if output.size(dim=0) == 400:
+        #     val_loss = self.loss_fn(output, batch['label'].float().reshape(-1,))
         # else:
         val_loss = self.loss_fn(output, batch['label'].float())
 
@@ -75,6 +77,7 @@ class System(pl.LightningModule):
 
         # val_loss = self.loss_fn(t, batch['label'].float())
         self.log('val_loss', val_loss)
+        print("in validation_step : ", val_loss)
 
         return (output, batch['label'])
 
@@ -85,13 +88,24 @@ class System(pl.LightningModule):
         #     else:
         #         all_outputs = torch.cat([o[0] for o in validation_step_outputs]).cpu()
 
+        print("validaion : " )
+
         all_outputs = torch.cat([o[0] for o in validation_step_outputs]).cpu()
         all_labels = torch.cat([o[1] for o in validation_step_outputs]).cpu()
 
+
+        print("all _ output : ", all_outputs)
+        print("all_labels : ", all_outputs)
+
+        # 1-6 valid code
         val_metric = self.performance_metric(all_outputs, all_labels)
         self.log('val_metric', val_metric)
 
-        self.metric_list.append(val_metric)
+
+        self.val_metric_list.append(val_metric)
+        print("all metric in val : ", val_metric)
+
+
 
     def test_step(self, batch, batch_idx):
         output = self.model(batch).squeeze()
@@ -110,6 +124,7 @@ class System(pl.LightningModule):
         all_indices = torch.cat([o[1] for o in test_step_outputs]).cpu()
         all_labels = torch.cat([o[2] for o in test_step_outputs]).cpu()
 
+        print("all output : ", len(all_outputs), " all labels : ", len(all_labels))
         # modify here
         test_metric = self.performance_metric(all_outputs, all_labels)
 
@@ -210,7 +225,8 @@ def train(i, train_ds, val_ds, modalities,
 
     # trainer.model.test_results
 
-    return trainer, trainer.model.metric_list #system.test_results
+    return trainer, trainer.model.training_loss, trainer.model.training_metric, \
+           trainer.model.val_loss_list, trainer.model.val_metric_list #system.test_results
 
 def test(i, model, test_ds, prefix=None):
 

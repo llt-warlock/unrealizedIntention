@@ -51,6 +51,7 @@ def do_cross_validation(do_train, ds, last_test_ds, input_modalities, seed, pref
     # for i in range(0, len(cv_splits)):
     #     print("type : ", type(cv_splits[i]),"  : ", len(cv_splits[i][0]), "  # ", len(cv_splits[i][1]))
     all_results = []
+    roc_list = None
     cross_validation_roc = []
 
     for f, (train_idx, test_idx) in enumerate(cv_splits):
@@ -98,13 +99,13 @@ def do_cross_validation(do_train, ds, last_test_ds, input_modalities, seed, pref
         pl.utilities.seed.seed_everything(seed + f + 734890573)
         if do_train:
             trainer, roc_list = train(f, train_ds, test_ds, input_modalities,
-                                      prefix=prefix + f'_fold{f}' if prefix else None,
-                                      eval_every_epoch=True,
-                                      deterministic=deterministic,
-                                      weights_path=weights_path)
+                                                                        prefix=prefix + f'_fold{f}' if prefix else None,
+                                                                        eval_every_epoch=True,
+                                                                        deterministic=deterministic,
+                                                                        weights_path=weights_path)
             model = trainer.model
 
-            torch.save(model.state_dict(), "model_version_4_40_10.pt")
+            torch.save(model.state_dict(), "model_version_2_10_10.pt")
 
             # if best_model is None:
             #     best_model = model
@@ -116,7 +117,7 @@ def do_cross_validation(do_train, ds, last_test_ds, input_modalities, seed, pref
             #         best_model_performance = roc_list
         else:
 
-            #model = System.load_from_checkpoint(checkpoint_path=weights_path)
+            # model = System.load_from_checkpoint(checkpoint_path=weights_path)
             model = System('accel', 'classification')
             model.load_state_dict(torch.load("model_version_1_20_10.pt"))
 
@@ -172,13 +173,13 @@ def do_run(examples, test_examples, input_modalities,
     seed = 22
 
     f_fold, metrics, probas, indices, precision, recall, cross_validation_roc = do_cross_validation(
-        do_train,
-        ds,
-        test_ds,
-        input_modalities=input_modalities,
-        deterministic=deterministic,
-        seed=seed,
-        prefix=f'{prefix}I{"-".join(input_modalities)}')
+            do_train,
+            ds,
+            test_ds,
+            input_modalities=input_modalities,
+            deterministic=deterministic,
+            seed=seed,
+            prefix=f'{prefix}I{"-".join(input_modalities)}')
 
     torch.cuda.empty_cache()
 
@@ -193,16 +194,16 @@ def do_run(examples, test_examples, input_modalities,
            }, cross_validation_roc
 
 
-def get_table(do_train=True, deterministic=True):
+def get_table(index_i, do_train=True, deterministic=True):
     # examples = pickle.load(open(examples_path, 'rb'))
     # data set
-    examples = pickle.load(open("../data/INTS_examples_12_24.pkl", 'rb'))
+    examples = pickle.load(open("../data/" + str(index_i) + "_INTS_examples_final_train_2s.pkl", 'rb'))
 
     # test dataset
-    test_examples = pickle.load(open("../data/INTS_examples_test_24.pkl", 'rb'))
+    test_examples = pickle.load(open("../data/" + str(index_i) + "_INTS_examples_final_test_2s.pkl", 'rb'))
 
-    unsuccessful_test_examples = pickle.load(open("../data/INTS_unsuccessful_test_29.pkl", 'rb'))
-
+    unsuccessful_test_examples = pickle.load(
+        open("../data/" + str(index_i) + "_INTS_unsuccessful_final_test_2s.pkl", 'rb'))
 
     all_input_modalities = [
         # ('video',),
@@ -211,13 +212,14 @@ def get_table(do_train=True, deterministic=True):
     ]
 
     res = {}
+    cross_validation_roc = []
     '''
     examples: 输入的数据
     '''
     for input_modalities in all_input_modalities:
         run_results, cross_validation_roc = do_run(
             examples,
-            unsuccessful_test_examples,
+            test_examples,
             input_modalities,
             do_train=do_train,
             deterministic=deterministic)
@@ -229,7 +231,37 @@ def get_table(do_train=True, deterministic=True):
 if __name__ == '__main__':
 
     try:
-        res, cross_validation_roc = get_table(do_train=True, deterministic=False)
+
+        res, cross_validation_roc = get_table(0, do_train=True, deterministic=False)
+
+        print(res)
+        print('\n\n\n\n')
+
+        print(cross_validation_roc)
+        # with open('unsuccessful_performance_test_1_20_1.txt', 'w') as f:
+        #     metric_list = []
+        #     precision_list = []
+        #     recall_list = []
+        #     for index_q in range(0, 100):
+        #         print("index : ", index_q)
+        #         res, cross_training_loss, cross_training_roc, cross_validation_loss, \
+        #         cross_validation_roc = get_table(index_q, do_train=False, deterministic=False)
+        #         print(res)
+        #         for ks, vs in res.items():
+        #             for k, v in vs.items():
+        #                 if k == "metrics":
+        #                     metric_list.append(v[0])
+        #                 if k == "precision":
+        #                     precision_list.append(v[0])
+        #                 if k == "recall":
+        #                     recall_list.append(v[0])
+        #     f.write(str(metric_list) + '\n')
+        #     f.write(str(np.mean(metric_list)) + "  " + str(np.std(metric_list)) + '\n')
+        #     f.write(str(precision_list) + '\n')
+        #     f.write(str(np.mean(precision_list)) + "  " + str(np.std(precision_list)) + '\n')
+        #     f.write(str(recall_list) + '\n')
+        #     f.write(str(np.mean(recall_list)) + "  " + str(np.std(recall_list)))
+        # f.close()
 
         # for ks, vs in res.items():
         #     for k, v in vs.items():
@@ -238,35 +270,33 @@ if __name__ == '__main__':
         #         if k == "metrics":
         #             print("metrics : ", v)
 
-        with open('unsuccessful_intention_test.txt', 'w') as f:
-            for ks, vs in res.items():
-                for k, v in vs.items():
-                    if k == "probas":
-                        for index in range(0, len(v)):
-                            #print("len : ", len(v))
-                            for id_index in range(0, len(v[index])):
-                                # print("aaa ", len(v[index])) # 38个人
-                                # print("bbb ", len(v[index][id_index]))
+        # with open('unsuccessful_performance_check.txt', 'w') as f:
+        #     for ks, vs in res.items():
+        #         for k, v in vs.items():
+        #             if k == "probas":
+        #                 for index in range(0, len(v)):
+        #                     # print("len : ", len(v))
+        #                     for id_index in range(0, len(v[index])):
+        #                         # print("aaa ", len(v[index])) # 38个人
+        #                         # print("bbb ", len(v[index][id_index]))
+        #
+        #                         f.write("id : " + str(id_index) + " mean prob : " + str(
+        #                             np.mean(v[index][id_index])) + '\n')
 
-                                f.write("id : " + str(id_index) + " mean prob : " + str(np.mean(v[index][id_index])) + '\n')
+        # f.close()
 
-        f.close()
+        # with open('successful_performance.txt', 'w') as f:
+        #     for i in cross_validation_roc:
+        #         temp = " "
+        #         for j in i:
+        #             print(j, end="  ")
+        #             temp = temp + " " + str(j)
+        #
+        #         f.write(temp + '  \n')
+        #
+        #         print("")
 
-        print(res)
 
-
-        with open('performance_1_10_2_90.txt', 'w') as f:
-            for i in cross_validation_roc:
-                temp = " "
-                for j in i:
-                    print(j, end="  ")
-                    temp = temp +  " " + str(j)
-
-                f.write(temp + '  \n')
-
-                print("")
-
-        f.close()
 
 
     except Exception:
