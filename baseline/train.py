@@ -20,7 +20,7 @@ class System(pl.LightningModule):
         self.save_hyperparameters()
        
         # self.model = SegmentationFusionModel(modalities, mask_len=60)
-        self.model = SegmentationFusionModel(modalities, mask_len=400)
+        self.model = SegmentationFusionModel(modalities, mask_len=100)
         self.loss_fn = {
             'classification':F.binary_cross_entropy_with_logits,
             'regression': F.mse_loss,
@@ -94,7 +94,7 @@ class System(pl.LightningModule):
         all_labels = torch.cat([o[1] for o in validation_step_outputs]).cpu()
 
 
-        print("all _ output : ", all_outputs)
+        print("all_unsuccessful _ output : ", all_outputs)
         print("all_labels : ", all_outputs)
 
         # 1-6 valid code
@@ -103,7 +103,7 @@ class System(pl.LightningModule):
 
 
         self.val_metric_list.append(val_metric)
-        print("all metric in val : ", val_metric)
+        print("all_unsuccessful metric in val : ", val_metric)
 
 
 
@@ -124,7 +124,7 @@ class System(pl.LightningModule):
         all_indices = torch.cat([o[1] for o in test_step_outputs]).cpu()
         all_labels = torch.cat([o[2] for o in test_step_outputs]).cpu()
 
-        print("all output : ", len(all_outputs), " all labels : ", len(all_labels))
+        print("all_unsuccessful output : ", len(all_outputs), " all_unsuccessful labels : ", len(all_labels))
         # modify here
         test_metric = self.performance_metric(all_outputs, all_labels)
 
@@ -141,6 +141,7 @@ class System(pl.LightningModule):
 
 def _collate_fn(batch):
     batch = batch[0]
+    #print(batch)
     return {k: torch.tensor(v) for k,v in batch.items()}
 
 

@@ -35,7 +35,7 @@ class SegmentationFusionModel(torch.nn.Module):
             #print(" in train 2: ", u.shape)
             #print("in train 2 : ", u)
 
-            if u.size(dim=0) == 400:
+            if u.size(dim=0) == 100:
                 print(u.size())
                 print("reshape ?")
                 u = u[None, :]

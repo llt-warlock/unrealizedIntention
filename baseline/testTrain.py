@@ -105,7 +105,7 @@ def do_cross_validation(do_train, ds, last_test_ds, input_modalities, seed, pref
                                                                         weights_path=weights_path)
             model = trainer.model
 
-            torch.save(model.state_dict(), "model_version_2_10_10.pt")
+            torch.save(model.state_dict(), "!!!.pt")
 
             # if best_model is None:
             #     best_model = model
@@ -194,16 +194,34 @@ def do_run(examples, test_examples, input_modalities,
            }, cross_validation_roc
 
 
-def get_table(index_i, do_train=True, deterministic=True):
+def get_table(index_i, Num, windowSize, do_train=True, deterministic=True):
     # examples = pickle.load(open(examples_path, 'rb'))
     # data set
-    examples = pickle.load(open("../data/" + str(index_i) + "_INTS_examples_final_train_2s.pkl", 'rb'))
+    train_examples = pickle.load(open("../data/train_pkl/" + str(windowSize) + "s/" + "_INTS_train.pkl", 'rb'))
+    test_examples = None
 
-    # test dataset
-    test_examples = pickle.load(open("../data/" + str(index_i) + "_INTS_examples_final_test_2s.pkl", 'rb'))
+    if Num == 2:
+        test_examples = pickle.load(open("../data/successful_test_pkl/" + str(windowSize) + "s/" + str(index_i) +"_INTS_test.pkl", 'rb'))
 
-    unsuccessful_test_examples = pickle.load(
-        open("../data/" + str(index_i) + "_INTS_unsuccessful_final_test_2s.pkl", 'rb'))
+    elif Num == 1:
+        test_examples = pickle.load(open("../data/all_test_pkl/" + str(windowSize) + "s/" + str(index_i) +"_INTS_test.pkl", 'rb'))
+
+    elif Num == 3:
+        print("正确")
+        test_examples = pickle.load(
+            open("../data/unsuccessful_test_pkl/all_unsuccessful/" + str(windowSize) + "s/" + str(index_i) + "_INTS_test.pkl", 'rb'))
+
+    elif Num == 4:
+        test_examples = pickle.load(
+            open("../data/unsuccessful_test_pkl/start/" + str(windowSize) + "s/" + str(index_i) + "_INTS_test.pkl", 'rb'))
+
+    elif Num == 5:
+        test_examples = pickle.load(
+            open("../data/unsuccessful_test_pkl/continue/" + str(windowSize) + "s/" + str(index_i) + "_INTS_test.pkl", 'rb'))
+
+    elif Num == 0:
+        test_examples = pickle.load(
+            open("../data/successful_test_pkl/" + str(windowSize) + "s/" + "0_INTS_test.pkl", 'rb'))
 
     all_input_modalities = [
         # ('video',),
@@ -218,7 +236,7 @@ def get_table(index_i, do_train=True, deterministic=True):
     '''
     for input_modalities in all_input_modalities:
         run_results, cross_validation_roc = do_run(
-            examples,
+            train_examples,
             test_examples,
             input_modalities,
             do_train=do_train,
@@ -227,77 +245,62 @@ def get_table(index_i, do_train=True, deterministic=True):
         res['-'.join(input_modalities)] = run_results
     return res, cross_validation_roc  # res
 
-
-if __name__ == '__main__':
-
+def main(train, Num, windowSize, numberOfExperiment=100):
     try:
+        if train:
+            res, cross_validation_roc = get_table(0, 0, windowSize, do_train=True, deterministic=False)
 
-        res, cross_validation_roc = get_table(0, do_train=True, deterministic=False)
+            print(res)
+            print('\n\n\n\n')
 
-        print(res)
-        print('\n\n\n\n')
+            print(cross_validation_roc)
 
-        print(cross_validation_roc)
-        # with open('unsuccessful_performance_test_1_20_1.txt', 'w') as f:
-        #     metric_list = []
-        #     precision_list = []
-        #     recall_list = []
-        #     for index_q in range(0, 100):
-        #         print("index : ", index_q)
-        #         res, cross_training_loss, cross_training_roc, cross_validation_loss, \
-        #         cross_validation_roc = get_table(index_q, do_train=False, deterministic=False)
-        #         print(res)
-        #         for ks, vs in res.items():
-        #             for k, v in vs.items():
-        #                 if k == "metrics":
-        #                     metric_list.append(v[0])
-        #                 if k == "precision":
-        #                     precision_list.append(v[0])
-        #                 if k == "recall":
-        #                     recall_list.append(v[0])
-        #     f.write(str(metric_list) + '\n')
-        #     f.write(str(np.mean(metric_list)) + "  " + str(np.std(metric_list)) + '\n')
-        #     f.write(str(precision_list) + '\n')
-        #     f.write(str(np.mean(precision_list)) + "  " + str(np.std(precision_list)) + '\n')
-        #     f.write(str(recall_list) + '\n')
-        #     f.write(str(np.mean(recall_list)) + "  " + str(np.std(recall_list)))
-        # f.close()
+        else:
+            # output result in txt file.
+            with open('./result/' + "experiment" + str(Num) + "/"+ str(windowSize) + "s/" + "performance.txt", 'w') as f:
+                metric_list = []
+                precision_list = []
+                recall_list = []
 
-        # for ks, vs in res.items():
-        #     for k, v in vs.items():
-        #         if k == 'f_fold':
-        #             print("f_fold : ", v, end = "  ")
-        #         if k == "metrics":
-        #             print("metrics : ", v)
-
-        # with open('unsuccessful_performance_check.txt', 'w') as f:
-        #     for ks, vs in res.items():
-        #         for k, v in vs.items():
-        #             if k == "probas":
-        #                 for index in range(0, len(v)):
-        #                     # print("len : ", len(v))
-        #                     for id_index in range(0, len(v[index])):
-        #                         # print("aaa ", len(v[index])) # 38个人
-        #                         # print("bbb ", len(v[index][id_index]))
-        #
-        #                         f.write("id : " + str(id_index) + " mean prob : " + str(
-        #                             np.mean(v[index][id_index])) + '\n')
-
-        # f.close()
-
-        # with open('successful_performance.txt', 'w') as f:
-        #     for i in cross_validation_roc:
-        #         temp = " "
-        #         for j in i:
-        #             print(j, end="  ")
-        #             temp = temp + " " + str(j)
-        #
-        #         f.write(temp + '  \n')
-        #
-        #         print("")
-
-
-
+                for index_q in range(0, 100):
+                    print("index : ", index_q)
+                    res, cross_validation_roc = get_table(index_q, Num, windowSize, do_train=False, deterministic=False)
+                    print(res)
+                    for ks, vs in res.items():
+                        for k, v in vs.items():
+                            if k == "metrics":
+                                metric_list.append(v[0])
+                            if k == "precision":
+                                precision_list.append(v[0])
+                            if k == "recall":
+                                recall_list.append(v[0])
+                f.write(str(metric_list) + '\n')
+                f.write(str(np.mean(metric_list)) + "  " + str(np.std(metric_list)) + '\n')
+                f.write(str(precision_list) + '\n')
+                f.write(str(np.mean(precision_list)) + "  " + str(np.std(precision_list)) + '\n')
+                f.write(str(recall_list) + '\n')
+                f.write(str(np.mean(recall_list)) + "  " + str(np.std(recall_list)))
+            f.close()
 
     except Exception:
         print(traceback.format_exc())
+
+
+if __name__ == '__main__':
+    # train model
+    #main(True, 0, 1, 100)
+
+    # experiment 1 done
+    #main(False, 1, 1, 100)
+
+    # experiment 2 done
+    main(False, 2, 1, 100)
+
+    # experiment 3
+    #main(False, 3, 1, 100)
+
+    # experiment 4
+    #main(False, 4, 1, 100)
+
+    # experiment 5
+    #main(False, 5, 1, 100)
