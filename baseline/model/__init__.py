@@ -1,7 +1,6 @@
-from sklearn.metrics import f1_score
+
 import torch
-import torch.nn as nn
-from pytorch_lightning.utilities.seed import isolate_rng
+
 
 from .accel import (
     SegmentationHead as AccelSegmentationhead,

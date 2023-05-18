@@ -1,16 +1,16 @@
 import os
-import sys
+
 import logging
 import pickle
 import traceback
 
 import torch
-import lightning_lite
+
 import numpy as np
-import pandas as pd
+
 from sklearn.model_selection import KFold, GroupKFold
 from IPython.display import clear_output
-# import pytorch_lightning as pl
+
 import lightning_lite as pl
 
 logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
@@ -20,23 +20,15 @@ torch.backends.cudnn.deterministic = True
 
 from data_loading.dataset import FatherDataset, FatherDatasetSubset
 from data_loading.extractors import AccelExtractor
-from constants import (
-    processed_data_path,
-    processed_accel_path,
-    processed_videos_path,
-    examples_path, dataset_path)
+
 from train import System, train, test
 
-import multiprocessing
-from multiprocessing import Process
-import threading
 
-import matplotlib.pyplot as plt
 
 '''
 do_train : 
 '''
-from model import SegmentationFusionModel
+
 
 
 def do_cross_validation(do_train, ds, last_test_ds, input_modalities, seed, prefix=None, deterministic=False):
@@ -288,13 +280,13 @@ def main(train, Num, windowSize, numberOfExperiment=100):
 
 if __name__ == '__main__':
     # train model
-    #main(True, 0, 1, 100)
+    main(True, 0, 1, 100)
 
     # experiment 1 done
     #main(False, 1, 1, 100)
 
     # experiment 2 done
-    main(False, 2, 1, 100)
+    #main(False, 2, 1, 100)
 
     # experiment 3
     #main(False, 3, 1, 100)

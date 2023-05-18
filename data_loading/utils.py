@@ -1,22 +1,12 @@
 import csv
 import os
-import hashlib
+
 import pickle
-from pathlib import Path
+
 
 import numpy as np
 import pandas as pd
-import cv2
-from tqdm import tqdm
-from scipy.interpolate import interp1d
 
-from constants import (
-    raw_videos_path,
-    balloon_pop_1_video_frame,
-    balloon_pop_1_accel_frame,
-    balloon_pop_3_video_frame,
-    balloon_pop_3_accel_frame
-)
 
 # csv_path = "../preprocess/audio/vad/"
 

@@ -1,5 +1,4 @@
-import pickle
-import random
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -11,7 +10,7 @@ import torch
 import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_auc_score
-from pytorch_lightning.utilities.seed import isolate_rng
+
 
 
 class FatherDatasetSubset(torch.utils.data.Subset):

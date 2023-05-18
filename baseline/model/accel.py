@@ -5,8 +5,6 @@ from tsai.imports import Module
 from tsai.models.layers import ConvBlock, BN1d
 from tsai.models.utils import Squeeze, Add
 
-from torchvision import models
-from torchsummary import summary
 
 class ResBlock(Module):
     def __init__(self, ni, nf, kss=[7, 5, 3]):
