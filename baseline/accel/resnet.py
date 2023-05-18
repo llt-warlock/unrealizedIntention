@@ -1,12 +1,11 @@
-from re import X
-import torch
+
 from torch import nn
-import torch.nn.functional as F
+
 
 from tsai.imports import Module
 from tsai.models.layers import ConvBlock, BN1d
 from tsai.models.utils import Squeeze, Add
-#from .utils import ConvBlock, Conv1dSamePadding
+
 
 class ResBlock(Module):
     def __init__(self, ni, nf, kss=[7, 5, 3]):

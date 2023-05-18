@@ -1,13 +1,12 @@
 import csv
 import operator
-import os
+
 import random as rand
 
-import numpy as np
+
 import pandas as pd
 from scipy.io import wavfile
-from scipy.io.wavfile import write as wavwrite, read as wavread
-from constants import (processed_audio_path)
+
 
 """
 This file is use for generating training samples and corresponding ground truth.

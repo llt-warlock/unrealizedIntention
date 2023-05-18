@@ -1,4 +1,4 @@
-import os
+
 from functools import partial
 
 import numpy as np
@@ -12,7 +12,7 @@ from torch.utils.data.sampler import BatchSampler, RandomSampler, SequentialSamp
 
 from model import SegmentationFusionModel
 
-import matplotlib.pyplot as plt
+
 
 class System(pl.LightningModule):
     def __init__(self, modalities, task='classification'):
@@ -94,7 +94,7 @@ class System(pl.LightningModule):
         all_labels = torch.cat([o[1] for o in validation_step_outputs]).cpu()
 
 
-        print("all_unsuccessful _ output : ", all_outputs)
+        print("  output : ", all_outputs)
         print("all_labels : ", all_outputs)
 
         # 1-6 valid code
@@ -103,7 +103,7 @@ class System(pl.LightningModule):
 
 
         self.val_metric_list.append(val_metric)
-        print("all_unsuccessful metric in val : ", val_metric)
+        print(" metric in val : ", val_metric)
 
 
 
@@ -124,7 +124,7 @@ class System(pl.LightningModule):
         all_indices = torch.cat([o[1] for o in test_step_outputs]).cpu()
         all_labels = torch.cat([o[2] for o in test_step_outputs]).cpu()
 
-        print("all_unsuccessful output : ", len(all_outputs), " all_unsuccessful labels : ", len(all_labels))
+        print("output : ", len(all_outputs), " labels : ", len(all_labels))
         # modify here
         test_metric = self.performance_metric(all_outputs, all_labels)
 
@@ -226,8 +226,10 @@ def train(i, train_ds, val_ds, modalities,
 
     # trainer.model.test_results
 
-    return trainer, trainer.model.training_loss, trainer.model.training_metric, \
-           trainer.model.val_loss_list, trainer.model.val_metric_list #system.test_results
+    # return trainer, trainer.model.training_loss, trainer.model.training_metric, \
+    #        trainer.model.val_loss_list, trainer.model.val_metric_list #system.test_results
+
+    return trainer, trainer.model.training_loss
 
 def test(i, model, test_ds, prefix=None):
 

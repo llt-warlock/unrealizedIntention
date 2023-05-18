@@ -1,16 +1,9 @@
-import os
+
 import pickle
-from math import floor
-from typing import Any, Callable, Optional, Tuple
-from pathlib import Path
 
-import torch
 import numpy as np
-import pandas as pd
-from joblib import Parallel, delayed
-from scipy.interpolate import interp1d
-from pytorchvideo.data.video import VideoPathHandler
 
+from scipy.interpolate import interp1d
 
 balloon_pop_1_video_frame = 23030 # to
 balloon_pop_1_accel_frame = 45977 + 19/34

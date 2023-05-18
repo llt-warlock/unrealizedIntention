@@ -1,11 +1,7 @@
-import os
+
 import pickle
 
 import utils
-
-from utils import (
-    Maker,
-    reset_examples_ids)
 
 accel_path = "../data/subj_accel_interp.pkl"
 
