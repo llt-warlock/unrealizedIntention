@@ -1,5 +1,5 @@
 ﻿
-1   Using the filtered vad files and accelerometer data to generate the samples, ground truth label and write them into csv files
+1   Using the filtered vad files to generate the samples, ground truth label and write them into csv files
     
     -   by running preprocess/audio/generate_samples.py 
         
