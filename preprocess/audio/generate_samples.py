@@ -889,24 +889,23 @@ if __name__ == '__main__':
     """
 
     # generate training samples.
-    #main(0, 1, 20, vad_dict)
-
+    main(0, 1, 20, vad_dict)
 
     # experiment 1  done
     # generate training dataset
-    #main(1, 1, 20, vad_dict, 100)
+    main(1, 1, 20, vad_dict, 100)
 
     # experiment 2 (only changes the timewindow (2nd para) and ratio (3rd para))
     # generate testing dataset for successful intention case.
     main(2, 1, 20, vad_dict, 100)
 
     # experiment 3 done
-    #main(3, 1, 20, vad_dict, 100, 'all_unsuccessful') # start/continue/all_unsuccessful
+    main(3, 1, 20, vad_dict, 100, 'all_unsuccessful') # start/continue/all_unsuccessful
 
     # experiment 4 done
-    #main(4, 1, 20, vad_dict, 100, 'start')
+    main(4, 1, 20, vad_dict, 100, 'start')
 
     # experiment 5  done
-    #main(5, 1, 20, vad_dict, 100, 'continue')
+    main(5, 1, 20, vad_dict, 100, 'continue')
 
 
