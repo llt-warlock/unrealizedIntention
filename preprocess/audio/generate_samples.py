@@ -893,7 +893,6 @@ if __name__ == '__main__':
 
 
     # experiment 1  done
-    # generate training dataset
     #main(1, 1, 20, vad_dict, 100)
 
     # experiment 2 (only changes the timewindow (2nd para) and ratio (3rd para))
