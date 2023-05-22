@@ -2,6 +2,7 @@
 1   Filter the vad 
 
     -   by running vad_processing/vad_processing.ipynb
+    -   fitered vad files should be put in the path preprocess/audio/filter_vad/
 
 
 2   Using the filtered vad files to generate the samples, ground truth label and write them into csv files
