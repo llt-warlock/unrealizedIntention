@@ -888,25 +888,25 @@ if __name__ == '__main__':
                     then need to indicate (start, continue, or all_unsuccessful) category.
     """
 
-    # generate training samples.
-    #main(0, 1, 20, vad_dict)
+    for window_size in range(1,4):
+        # generate training samples.
+        main(0, window_size, 20, vad_dict)
 
+        # experiment 1  done
+        # generate training dataset
+        main(1, window_size, 20, vad_dict, 100)
 
-    # experiment 1  done
-    # generate training dataset
-    #main(1, 1, 20, vad_dict, 100)
+        # experiment 2 (only changes the timewindow (2nd para) and ratio (3rd para))
+        # generate testing dataset for successful intention case.
+        main(2, window_size, 20, vad_dict, 100)
 
-    # experiment 2 (only changes the timewindow (2nd para) and ratio (3rd para))
-    # generate testing dataset for successful intention case.
-    main(2, 1, 20, vad_dict, 100)
+        # experiment 3 done
+        main(3, window_size, 20, vad_dict, 100, 'all_unsuccessful') # start/continue/all_unsuccessful
 
-    # experiment 3 done
-    #main(3, 1, 20, vad_dict, 100, 'all_unsuccessful') # start/continue/all_unsuccessful
+        # experiment 4 done
+        main(4, window_size, 20, vad_dict, 100, 'start')
 
-    # experiment 4 done
-    #main(4, 1, 20, vad_dict, 100, 'start')
-
-    # experiment 5  done
-    #main(5, 1, 20, vad_dict, 100, 'continue')
+        # experiment 5  done
+        main(5, window_size, 20, vad_dict, 100, 'continue')
 
 
