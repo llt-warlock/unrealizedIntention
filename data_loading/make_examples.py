@@ -70,26 +70,25 @@ def main(Num, numberOfExperiment, category=None):
 if __name__ == '__main__':
     # unsuccessful_examples
 
-    """
-    number of experiment 
-    """
-    # experiment 0
-    #make_all_examples(0, 1)
+    for window_size in range(1,4):
+        # experiment 0
+        make_all_examples(0, window_size)
 
-    # experiment 1
-    #make_all_examples(1, 1, 100)
+        # experiment 1
+        make_all_examples(1, window_size, 100)
 
-    # experiment 2  done
-    make_all_examples(2, 1, 100)
+        # experiment 2  done
+        make_all_examples(2, window_size, 100)
 
-    # experiment 3
-    #make_all_examples(3, 1, 100, 'all_unsuccessful')
+        # experiment 3
+        make_all_examples(3, window_size, 100, 'all_unsuccessful')
 
-    # experiment 4
-    #make_all_examples(4, 1, 100, 'start')
+        # experiment 4
+        make_all_examples(4, window_size, 100, 'start')
 
-    # experiment 5
-    #make_all_examples(5, 1, 100, 'continue')
+        # experiment 5
+        make_all_examples(5, window_size, 100, 'continue')
+
 
 
 
