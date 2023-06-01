@@ -70,10 +70,6 @@ def main(Num, numberOfExperiment, category=None):
 if __name__ == '__main__':
     # unsuccessful_examples
 
-    """
-    number of experiment 
-    """
-    
     for window_size in range(1,4):
         # experiment 0
         make_all_examples(0, window_size)
@@ -92,6 +88,7 @@ if __name__ == '__main__':
 
         # experiment 5
         make_all_examples(5, window_size, 100, 'continue')
+
 
 
 
