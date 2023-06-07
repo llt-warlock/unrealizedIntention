@@ -1,3 +1,0 @@
-modalities: !!python/tuple
-- accel
-task: classification
