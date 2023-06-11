@@ -97,7 +97,7 @@ def do_cross_validation(do_train, ds, last_test_ds, input_modalities, seed, pref
                                                                         weights_path=weights_path)
             model = trainer.model
 
-            torch.save(model.state_dict(), "!!!.pt")
+            torch.save(model.state_dict(), "model_temp.pt")
 
             # if best_model is None:
             #     best_model = model
@@ -111,7 +111,7 @@ def do_cross_validation(do_train, ds, last_test_ds, input_modalities, seed, pref
 
             # model = System.load_from_checkpoint(checkpoint_path=weights_path)
             model = System('accel', 'classification')
-            model.load_state_dict(torch.load("model_version_1_20_10.pt"))
+            model.load_state_dict(torch.load("model_temp.pt"))
 
         # select the best model
 
@@ -193,21 +193,25 @@ def get_table(index_i, Num, windowSize, do_train=True, deterministic=True):
     test_examples = None
 
     if Num == 2:
+        print("in experiment 2")
         test_examples = pickle.load(open("../data/successful_test_pkl/" + str(windowSize) + "s/" + str(index_i) +"_INTS_test.pkl", 'rb'))
 
     elif Num == 1:
+        print("in experiment 1")
         test_examples = pickle.load(open("../data/all_test_pkl/" + str(windowSize) + "s/" + str(index_i) +"_INTS_test.pkl", 'rb'))
 
     elif Num == 3:
-        print("正确")
+        print("in experiment 3")
         test_examples = pickle.load(
             open("../data/unsuccessful_test_pkl/all_unsuccessful/" + str(windowSize) + "s/" + str(index_i) + "_INTS_test.pkl", 'rb'))
 
     elif Num == 4:
+        print("in experiment 4")
         test_examples = pickle.load(
             open("../data/unsuccessful_test_pkl/start/" + str(windowSize) + "s/" + str(index_i) + "_INTS_test.pkl", 'rb'))
 
     elif Num == 5:
+        print("in experiment 5")
         test_examples = pickle.load(
             open("../data/unsuccessful_test_pkl/continue/" + str(windowSize) + "s/" + str(index_i) + "_INTS_test.pkl", 'rb'))
 
@@ -237,7 +241,7 @@ def get_table(index_i, Num, windowSize, do_train=True, deterministic=True):
         res['-'.join(input_modalities)] = run_results
     return res, cross_validation_roc  # res
 
-def main(train, Num, windowSize, numberOfExperiment=100):
+def main(train, experiment_num, windowSize, numberOfExperiment):
     try:
         if train:
             res, cross_validation_roc = get_table(0, 0, windowSize, do_train=True, deterministic=False)
@@ -249,14 +253,14 @@ def main(train, Num, windowSize, numberOfExperiment=100):
 
         else:
             # output result in txt file.
-            with open('./result/' + "experiment" + str(Num) + "/"+ str(windowSize) + "s/" + "performance.txt", 'w') as f:
+            with open('./result/' + "experiment" + str(experiment_num) + "/" + str(windowSize) + "s/" + "performance_new_temp_1.txt", 'w') as f:
                 metric_list = []
                 precision_list = []
                 recall_list = []
 
-                for index_q in range(0, 100):
-                    print("index : ", index_q)
-                    res, cross_validation_roc = get_table(index_q, Num, windowSize, do_train=False, deterministic=False)
+                for index_q in range(0, numberOfExperiment):
+                    print("experiment : ", experiment_num, "  index : ", index_q)
+                    res, cross_validation_roc = get_table(index_q, experiment_num, windowSize, do_train=False, deterministic=False)
                     print(res)
                     for ks, vs in res.items():
                         for k, v in vs.items():
@@ -279,20 +283,21 @@ def main(train, Num, windowSize, numberOfExperiment=100):
 
 
 if __name__ == '__main__':
-    # train model
-    main(True, 0, 1, 100)
+    #train model
+    main(True, experiment_num=0, windowSize=1, numberOfExperiment=100)
 
     # experiment 1 done
-    #main(False, 1, 1, 100)
+    #main(False, experiment_num=1, windowSize=1, numberOfExperiment=100)
 
     # experiment 2 done
-    #main(False, 2, 1, 100)
+    #main(False, experiment_num=2, windowSize=2, numberOfExperiment=100)
 
     # experiment 3
-    #main(False, 3, 1, 100)
+    #main(False, experiment_num=3, windowSize=4, numberOfExperiment=100)
 
     # experiment 4
-    #main(False, 4, 1, 100)
+    #main(False, experiment_num=4, windowSize=4, numberOfExperiment=100)
 
     # experiment 5
-    #main(False, 5, 1, 100)
+    #main(False, experiment_num=5, windowSize=4, numberOfExperiment=100)
+
