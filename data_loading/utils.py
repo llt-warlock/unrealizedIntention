@@ -64,7 +64,6 @@ class Maker():
         self.all_samples = None
 
     def load_accel(self, accel_path):
-        # self.accel = pickle.load(open(accel_path, 'rb'))
         self.accel = pickle.load(open('../data/subj_accel_interp.pkl', 'rb'))
 
     def load_vad(self, vad_path):
@@ -84,7 +83,6 @@ class Maker():
         start_pid = [2, 3, 4, 7, 10, 11, 17, 22, 23, 34]
         for i in start_pid:
             fpath = os.path.join(unsuccessful_vad, f'{i}.csv')
-            #print(unsuccessful_vad)
             self.unsuccessful_vad[i] = pd.read_csv(fpath, header=None).to_numpy()
 
         if len(self.unsuccessful_vad) == 0:
@@ -154,7 +152,6 @@ class Maker():
 
             # create dict for successful intention training dataset.
             for j in range(0, len(time_window_list)):
-                #print("in train list : ", j, "  , ", len(time_window_list))
                 ini_time = time_window_list[j][0]
                 end_time = time_window_list[j][1]
 
@@ -185,7 +182,6 @@ class Maker():
         # loop over participants
         for i in valid_list:
 
-            #print("pid : ", i)
 
             # generate test dataset time window of successful intention case:
             test_time_window_list = []
@@ -198,12 +194,12 @@ class Maker():
 
             # create dict for successful intention testing dataset.
             for j in range(0, len(test_time_window_list)):
-                #print("in test list : ", j, "  , ", len(test_time_window_list))
+
                 test_ini_time = test_time_window_list[j][0]
                 test_end_time = test_time_window_list[j][1]
 
                 test_temp_vad = self._get_vad(i, test_ini_time, test_end_time, 100)
-                # print("temp vad: ", temp_vad)
+
                 interp_vad = self._interp_vad(test_temp_vad, 100, feature_fs)
 
 
@@ -234,7 +230,6 @@ class Maker():
         for i in valid_list:
             all_test_time_window_list = []
 
-            # unsuccessful_test_time_window_list = []
             with open(test_csv_path_all_sample +  str(windowSize) + "s/" + str(index_s) + '_' + str(i) + ".csv") as infile:
                 all_reader = csv.reader(infile)
 
@@ -248,8 +243,7 @@ class Maker():
                 all_end_time = all_test_time_window_list[j][1]
 
                 all_vad = self._get_all_vad(i, all_ini_time, all_end_time, 100)
-                # print("temp vad: ", temp_vad)
-                # print("temp vad: ", temp_vad)
+
                 interp_vad = self._interp_vad(all_vad, 100, feature_fs)
 
 
@@ -281,7 +275,7 @@ class Maker():
             all_test_time_window_list = []
 
             if unsuccessful_pid.__contains__(i):
-                # unsuccessful_test_time_window_list = []
+
                 with open(test_csv_path_unsuccessful + category + "/" + str(windowSize) +"s/" + str(index_s) + '_' + str(i) + ".csv") as infile:
                     all_reader = csv.reader(infile)
 
@@ -291,12 +285,12 @@ class Maker():
                                                                     int(unsuccessful_line[1])]))
 
                 for j in range(0, len(all_test_time_window_list)):
-                    #print("in test list : ", j, "  , ", len(all_test_time_window_list))
+
                     all_ini_time = all_test_time_window_list[j][0]
                     all_end_time = all_test_time_window_list[j][1]
 
                     unsuccessful_temp_vad = self._get_unsuccessful_vad(i, all_ini_time, all_end_time, 100)
-                    # print("temp vad: ", temp_vad)
+
                     interp_vad = self._interp_vad(unsuccessful_temp_vad, 100, feature_fs)
 
 
