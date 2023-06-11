@@ -53,7 +53,13 @@ class FatherDataset(torch.utils.data.Dataset):
         # items['label'] = [np.mean(ex['vad']) >= self.label_threshold for ex in examples]
         items['index'] = idxs
         # items['label'] = np.stack([ex['interp_vad'] for ex in examples])
+
+        # for ex in examples:
+        #     print("shape: ", ex['vad'].shape, "  ", ex['vad'])
+
         items['label'] = np.stack([ex['vad'] for ex in examples])
+        #print(items['label'], "     waff")
+
         #print("type : ", type(items['label']), "  ", type(items['label']))
         return items
 

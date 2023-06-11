@@ -38,10 +38,9 @@ def do_cross_validation(do_train, ds, last_test_ds, input_modalities, seed, pref
 
     last_test_set_idx = np.arange(len(last_test_ds.examples))
 
-    # print(" len of test ds : ", len(test_ds), " type : ", type(test_ds))
+
     cv_splits = list(GroupKFold(n_splits=3).split(range(len(ds)), groups=ds.get_groups()))
-    # for i in range(0, len(cv_splits)):
-    #     print("type : ", type(cv_splits[i]),"  : ", len(cv_splits[i][0]), "  # ", len(cv_splits[i][1]))
+
     all_results = []
     roc_list = None
     cross_validation_roc = []
@@ -75,7 +74,6 @@ def do_cross_validation(do_train, ds, last_test_ds, input_modalities, seed, pref
         # val_samples_weight = torch.tensor([val_weight[int(t)] for t in temp_val_tensor])
         # print("val : ", val_weight, val_samples_weight)
 
-        ################################################
 
         train_ds = FatherDatasetSubset(ds, train_idx, eval=False)
         test_ds = FatherDatasetSubset(ds, test_idx, eval=True)
@@ -99,17 +97,9 @@ def do_cross_validation(do_train, ds, last_test_ds, input_modalities, seed, pref
 
             torch.save(model.state_dict(), "model_temp.pt")
 
-            # if best_model is None:
-            #     best_model = model
-            #     best_model_performance = roc_list
-            #
-            # else:
-            #     if roc_list[-1] > best_model_performance[-1]:
-            #         best_model = model
-            #         best_model_performance = roc_list
         else:
 
-            # model = System.load_from_checkpoint(checkpoint_path=weights_path)
+
             model = System('accel', 'classification')
             model.load_state_dict(torch.load("model_temp.pt"))
 
@@ -124,7 +114,7 @@ def do_cross_validation(do_train, ds, last_test_ds, input_modalities, seed, pref
         if do_train:
             roc_list.append(f)
             cross_validation_roc.append(roc_list)
-            # torch.save(best_model.state_dict(), "best_model.pt")
+
 
         clear_output(wait=False)
 
@@ -153,7 +143,6 @@ def do_run(examples, test_examples, input_modalities,
     extractors = {}
 
     if 'accel' in input_modalities:
-        # accel_ds_path = os.path.join(processed_accel_path, 'subj_accel_interp.pkl')
         # get accel data
         accel_ds_path = '../data/subj_accel_interp.pkl'
         extractors['accel'] = AccelExtractor(accel_ds_path)
@@ -187,8 +176,7 @@ def do_run(examples, test_examples, input_modalities,
 
 
 def get_table(index_i, Num, windowSize, do_train=True, deterministic=True):
-    # examples = pickle.load(open(examples_path, 'rb'))
-    # data set
+
     train_examples = pickle.load(open("../data/train_pkl/" + str(windowSize) + "s/" + "_INTS_train.pkl", 'rb'))
     test_examples = None
 

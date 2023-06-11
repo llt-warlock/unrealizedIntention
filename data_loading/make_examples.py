@@ -21,12 +21,6 @@ def make_all_examples(Num, windowSize, feature_fs, numberOfExperiment=None, cate
     start_pid = [2, 3, 4, 7, 10, 11, 17, 22, 23, 34]
 
 
-    #maker = utils.Maker(accel_path, realized_intention_label_path, unrealized_intention_path, all_intention_label_path)
-
-    #train_examples, test_example, unsuccessful_example = maker.make_examples(start_pid, index_s)
-    #all_test_samples = maker.make_all_examples(start_pid, index_s)
-
-
     if Num == 1:
         temp = all_intention_label_path + str(windowSize) + "s/"
         maker = utils.Maker(accel_path=accel_path, all_sample_path=temp)
@@ -71,7 +65,6 @@ def main(Num, numberOfExperiment, category=None):
 
 
 if __name__ == '__main__':
-    # unsuccessful_examples
 
     for window_size in range(1,2):
         print("window size : ", window_size)
