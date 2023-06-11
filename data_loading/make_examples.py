@@ -66,25 +66,25 @@ def main(Num, numberOfExperiment, category=None):
 
 if __name__ == '__main__':
 
-    for window_size in range(1,2):
+    for window_size in range(1,5):
         print("window size : ", window_size)
         # experiment 0
         make_all_examples(0, window_size, feature_fs=20)
 
         # experiment 1
-        #make_all_examples(1, window_size, feature_fs=20, numberOfExperiment=100)
+        make_all_examples(1, window_size, feature_fs=20, numberOfExperiment=100)
 
         # experiment 2  done
-        #make_all_examples(2, window_size, feature_fs=20, numberOfExperiment=100)
+        make_all_examples(2, window_size, feature_fs=20, numberOfExperiment=100)
 
         # experiment 3
-        #make_all_examples(3, window_size, feature_fs=20, numberOfExperiment=100, category='all_unsuccessful')
+        make_all_examples(3, window_size, feature_fs=20, numberOfExperiment=100, category='all_unsuccessful')
 
         # experiment 4
-        #make_all_examples(4, window_size, feature_fs=20, numberOfExperiment=100, category='start')
+        make_all_examples(4, window_size, feature_fs=20, numberOfExperiment=100, category='start')
 
         # experiment 5
-        #make_all_examples(5, window_size, feature_fs=20, numberOfExperiment=100, category='continue')
+        make_all_examples(5, window_size, feature_fs=20, numberOfExperiment=100, category='continue')
 
 
 
