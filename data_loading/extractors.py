@@ -20,8 +20,7 @@ class AccelExtractor():
         self.strict = strict
 
         self.num_channels = 3
-        #self.fs = 20
-        self.fs = 100
+        self.fs = 20
 
     def __call__(self, pid, start, end):
         #print("pid : ", pid, " start: ", start, " end : ", end)
@@ -33,6 +32,7 @@ class AccelExtractor():
             return np.zeros((self.num_channels, round(self.fs * (end-start))), dtype=np.float32)
 
         accel_ini = video_seconds_to_accel_sample(start)
+        #print("start : ", start, "  accel_ini : ", accel_ini)
         accel_fin = video_seconds_to_accel_sample(end)
 
 
@@ -42,8 +42,11 @@ class AccelExtractor():
 
         my_subj_accel = self.accel[pid]
         temp = my_subj_accel[:,0] > accel_ini
+        # print("11111, ",my_subj_accel[:,0])
+        # print("22222 ", my_subj_accel[:,0] > accel_ini)
         ini_idx = np.argmax(my_subj_accel[:,0] > accel_ini)
         fin_idx = ini_idx + round(self.fs * (end-start))
+        #print("ini_idx : ", ini_idx, " fin_idx : ", fin_idx)
 
         #if pid == 35:
 

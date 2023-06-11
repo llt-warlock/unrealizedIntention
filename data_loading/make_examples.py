@@ -5,54 +5,57 @@ import utils
 
 accel_path = "../data/subj_accel_interp.pkl"
 
-def make_all_examples(Num, windowSize, numberOfExperiment=None, category=None):
+def make_all_examples(Num, windowSize, feature_fs, numberOfExperiment=None, category=None):
     accel_path = "../data/subj_accel_interp.pkl"
 
     # successful train ground truth label
-    vad_path = "../preprocess/audio/successful_train_ground_truth/"
+    realized_intention_label_path = "../preprocess/audio/successful_train_ground_truth/"
 
 
     # unsuccessful intention start/continue case ground truth. (which one depends on selection)
-    unsuccessful_vad_path = "../preprocess/audio/unsuccessful_intention_test_label/"
+    unrealized_intention_path = "../preprocess/audio/unsuccessful_intention_test_label/"
 
     # Both start and continue unsuccessful intention ground truth label.
-    all_vad_path = "../preprocess/audio/all_label/"
-    # maker = utils.Maker(accel_path, vad_path)
-    # examples += maker.make_examples()
+    all_intention_label_path = "../preprocess/audio/all_label/"
+
     start_pid = [2, 3, 4, 7, 10, 11, 17, 22, 23, 34]
 
 
-    #maker = utils.Maker(accel_path, vad_path, unsuccessful_vad_path, all_vad_path)
+    #maker = utils.Maker(accel_path, realized_intention_label_path, unrealized_intention_path, all_intention_label_path)
 
     #train_examples, test_example, unsuccessful_example = maker.make_examples(start_pid, index_s)
     #all_test_samples = maker.make_all_examples(start_pid, index_s)
 
 
     if Num == 1:
-        temp = all_vad_path + str(windowSize) + "s/"
+        temp = all_intention_label_path + str(windowSize) + "s/"
         maker = utils.Maker(accel_path=accel_path, all_sample_path=temp)
         for index in range(0, numberOfExperiment):
-            all_test_samples = maker.make_all_examples(index, windowSize)
+            print("num : 1 -- ", index)
+            all_test_samples = maker.make_all_examples(index, windowSize, feature_fs)
             pickle.dump(all_test_samples, open('../data/all_test_pkl/' +  str(windowSize) + "s/" + str(index) + '_INTS_test.pkl', 'wb'))
 
     elif Num == 2:
-        temp = vad_path + str(windowSize) + "s/"
+        temp = realized_intention_label_path + str(windowSize) + "s/"
         maker = utils.Maker(accel_path=accel_path, vad_path=temp)
         for index in range(0, numberOfExperiment):
-            successful_test_samples = maker.make_test_examples(index, windowSize)
+            print("num : 2 -- ", index)
+            successful_test_samples = maker.make_test_examples(index, windowSize, feature_fs)
             pickle.dump(successful_test_samples, open('../data/successful_test_pkl/' + str(windowSize) + "s/" + str(index) + '_INTS_test.pkl', 'wb'))
 
     elif Num == 0:
-        temp = vad_path + str(windowSize) + "s/"
+        print("Generate training pkl")
+        temp = realized_intention_label_path + str(windowSize) + "s/"
         maker = utils.Maker(accel_path=accel_path, vad_path=temp)
-        train_samples = maker.make_train_examples(windowSize)
+        train_samples = maker.make_train_examples(windowSize, feature_fs)
         pickle.dump(train_samples, open('../data/train_pkl/' + str(windowSize) + "s/" + '_INTS_train.pkl', 'wb'))
 
     elif Num == 3 or Num == 4 or Num == 5:
-        temp = unsuccessful_vad_path + str(category) + "/" + str(windowSize) + "s/"
+        temp = unrealized_intention_path + str(category) + "/" + str(windowSize) + "s/"
         maker = utils.Maker(accel_path=accel_path, unsuccessful_vad_path=temp)
         for index in range(0, numberOfExperiment):
-            all_test_samples = maker.make_unsuccessful_examples(start_pid, index, windowSize, category)
+            print("num : 3-4-5 -- ", index, "  ", str(category))
+            all_test_samples = maker.make_unsuccessful_examples(start_pid, index, windowSize, feature_fs, category)
             pickle.dump(all_test_samples, open('../data/unsuccessful_test_pkl/' + str(category) + "/" + str(windowSize) + "s/" + str(index) + '_INTS_test.pkl', 'wb'))
 
 
@@ -70,24 +73,25 @@ def main(Num, numberOfExperiment, category=None):
 if __name__ == '__main__':
     # unsuccessful_examples
 
-    for window_size in range(1,4):
+    for window_size in range(1,2):
+        print("window size : ", window_size)
         # experiment 0
-        make_all_examples(0, window_size)
+        make_all_examples(0, window_size, feature_fs=20)
 
         # experiment 1
-        make_all_examples(1, window_size, 100)
+        #make_all_examples(1, window_size, feature_fs=20, numberOfExperiment=100)
 
         # experiment 2  done
-        make_all_examples(2, window_size, 100)
+        #make_all_examples(2, window_size, feature_fs=20, numberOfExperiment=100)
 
         # experiment 3
-        make_all_examples(3, window_size, 100, 'all_unsuccessful')
+        #make_all_examples(3, window_size, feature_fs=20, numberOfExperiment=100, category='all_unsuccessful')
 
         # experiment 4
-        make_all_examples(4, window_size, 100, 'start')
+        #make_all_examples(4, window_size, feature_fs=20, numberOfExperiment=100, category='start')
 
         # experiment 5
-        make_all_examples(5, window_size, 100, 'continue')
+        #make_all_examples(5, window_size, feature_fs=20, numberOfExperiment=100, category='continue')
 
 
 

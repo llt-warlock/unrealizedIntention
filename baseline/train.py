@@ -20,7 +20,7 @@ class System(pl.LightningModule):
         self.save_hyperparameters()
        
         # self.model = SegmentationFusionModel(modalities, mask_len=60)
-        self.model = SegmentationFusionModel(modalities, mask_len=100)
+        self.model = SegmentationFusionModel(modalities, mask_len=20)
         self.loss_fn = {
             'classification':F.binary_cross_entropy_with_logits,
             'regression': F.mse_loss,
@@ -42,8 +42,6 @@ class System(pl.LightningModule):
         output = self.model(batch).squeeze()
         #output = self.model(batch)
 
-        print("in training step : ", "  output : ", output.shape, " target : ", batch['label'].shape)
-        print(output, "   ", batch['label'])
 
 
         # if output.size(dim=0) == 200:
@@ -77,7 +75,6 @@ class System(pl.LightningModule):
 
         # val_loss = self.loss_fn(t, batch['label'].float())
         self.log('val_loss', val_loss)
-        print("in validation_step : ", val_loss)
 
         return (output, batch['label'])
 
@@ -88,14 +85,11 @@ class System(pl.LightningModule):
         #     else:
         #         all_outputs = torch.cat([o[0] for o in validation_step_outputs]).cpu()
 
-        print("validaion : " )
+
 
         all_outputs = torch.cat([o[0] for o in validation_step_outputs]).cpu()
         all_labels = torch.cat([o[1] for o in validation_step_outputs]).cpu()
 
-
-        print("  output : ", all_outputs)
-        print("all_labels : ", all_outputs)
 
         # 1-6 valid code
         val_metric = self.performance_metric(all_outputs, all_labels)
@@ -103,7 +97,7 @@ class System(pl.LightningModule):
 
 
         self.val_metric_list.append(val_metric)
-        print(" metric in val : ", val_metric)
+
 
 
 
@@ -113,18 +107,25 @@ class System(pl.LightningModule):
         return (output, batch['index'], batch['label'])
 
     def test_epoch_end(self, test_step_outputs):
+        # # #
+        # for o in test_step_outputs:
+        #     print(" !!! ", o[0].shape)
+        #     if o[0].size(dim=0) == 60:
+        #         print("111")
+        #         all_outputs = torch.cat([o[0].reshape(-1,) for o in test_step_outputs]).cpu()
+        #     else:
+        #         print("222")
+        #         all_outputs = torch.cat([o[0] for o in test_step_outputs]).cpu()
 
-        # print("In test_epoch_end : ")
-        # for i in range(0,len(test_step_outputs)):
-        #     print(type(test_step_outputs[i]), " : ", test_step_outputs[i][0] , "  # ", test_step_outputs[i][1])
-
-            #print(i ,"  ####################### ", temp[2].shape)
-
+        # print("#################################################")
         all_outputs = torch.cat([o[0] for o in test_step_outputs]).cpu()
         all_indices = torch.cat([o[1] for o in test_step_outputs]).cpu()
         all_labels = torch.cat([o[2] for o in test_step_outputs]).cpu()
 
-        print("output : ", len(all_outputs), " labels : ", len(all_labels))
+        # print("output : ", len(all_outputs), " labels : ", len(all_labels))
+        #print("all_output: : ", all_outputs.shape, "  all_labels : ", all_labels.shape)
+        # print(all_outputs)
+        # print(all_labels)
         # modify here
         test_metric = self.performance_metric(all_outputs, all_labels)
 
@@ -156,7 +157,7 @@ def train(i, train_ds, val_ds, modalities,
         ('audio', 'video', 'accel'): 15
     }
 
-    print("type : ", train_ds)
+
 
 
     # data loaders
