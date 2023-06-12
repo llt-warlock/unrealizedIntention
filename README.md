@@ -62,11 +62,6 @@
                 -   z : how mnay experiment run
 
 
-### Importance : 
-        Change the windowSize in /baseline/train.py (23th line)
-            -   self.model = SegmentationFusionModel(modalities, mask_len=windowSize)
-    
-        Change the windowSize in /baseline/model/init_.py (37th line)
-            -   if u.size(dim=0) == windowSize:
+
 
         
