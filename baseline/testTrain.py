@@ -215,9 +215,7 @@ def get_table(index_i, Num, windowSize, do_train=True, deterministic=True):
 
     res = {}
     cross_validation_roc = []
-    '''
-    examples: 输入的数据
-    '''
+    
     for input_modalities in all_input_modalities:
         run_results, cross_validation_roc = do_run(
             train_examples,
