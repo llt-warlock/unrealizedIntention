@@ -8,13 +8,13 @@
 2   Using the filtered vad files to generate the samples, ground truth label and write them into csv files
     
     -   by running preprocess/audio/generate_samples.py 
-        
-        #main(x, y, z, vad_dict) 
-            -   x : experiment num (0 indicates generating training samples)
-            -   y : window size
-            -   z : ratio of positive samples to negative samples
 
-    -   make sure generate training samples first.
+        #Train csv
+        main(0, windowSize, positive_negative_ratio, vad_files)
+
+        #Test csv
+        main(experimentNumber, windowSize, positive_negative_ratio, vad_files, number_of_experiment_repeated, unrealized_sample_category(optional)) 
+
 
 3   Making pkl files for training and corresponding experiments' samples
 
